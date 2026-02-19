@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sketch 4 — Storm Power Rankings</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --shadow: rgba(0,0,0,0.5);
+    --silver: #a0b0c0;
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --shadow: rgba(0,0,0,0.1);
+    --silver: #64748b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 28px; }
+  .storm { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; }
+  .storm:hover .bar-fill { filter: brightness(1.2); }
+  .rank { font-size: 24px; font-weight: bold; color: var(--dim); width: 32px; text-align: right; }
+  .rank.gold { color: #f0c040; }
+  .rank.silver { color: var(--silver); }
+  .rank.bronze { color: #c07040; }
+  .info { width: 120px; }
+  .info .date { font-size: 12px; color: var(--text); }
+  .info .day { font-size: 10px; color: var(--muted); }
+  .bar-container { flex: 1; height: 32px; background: var(--bg-card); border-radius: 4px; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease-out; display: flex; align-items: center; padding-left: 8px; }
+  .bar-val { font-size: 12px; font-weight: bold; color: var(--text-bold); text-shadow: 0 1px 3px var(--shadow); }
+  .pct { width: 50px; text-align: right; font-size: 11px; color: var(--muted); }
+  .storm-detail { margin-top: 32px; padding: 20px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); display: none; }
+  .storm-detail h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+  .storm-detail .context { font-size: 11px; color: var(--muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>Storm Power Rankings</h1>
+<p class="subtitle">Top 10 wettest days this season · click for context</p>
+<div id="list"></div>
+<div class="storm-detail" id="detail"></div>
+<script>
+const DATA = {"2025-10-01":0,"2025-10-02":0.24,"2025-10-03":0,"2025-10-04":0,"2025-10-05":0,"2025-10-06":0,"2025-10-07":0,"2025-10-08":0,"2025-10-09":0,"2025-10-10":0,"2025-10-11":0,"2025-10-12":0,"2025-10-13":0.53,"2025-10-14":0,"2025-10-15":0.01,"2025-10-16":0,"2025-10-17":0,"2025-10-18":0,"2025-10-19":0,"2025-10-20":0,"2025-10-21":0,"2025-10-22":0,"2025-10-23":0,"2025-10-24":0,"2025-10-25":0,"2025-10-26":0.02,"2025-10-27":0.03,"2025-10-28":0,"2025-10-29":0,"2025-10-30":0,"2025-10-31":0,"2025-11-01":0,"2025-11-02":0,"2025-11-03":0,"2025-11-04":0,"2025-11-05":0.11,"2025-11-06":0,"2025-11-07":0,"2025-11-08":0,"2025-11-09":0,"2025-11-10":0,"2025-11-11":0,"2025-11-12":0,"2025-11-13":1.47,"2025-11-14":0,"2025-11-15":0.22,"2025-11-16":0.29,"2025-11-17":0.68,"2025-11-18":0.01,"2025-11-19":0,"2025-11-20":0.24,"2025-11-21":0,"2025-11-22":0,"2025-11-23":0,"2025-11-24":0,"2025-11-25":0,"2025-11-26":0,"2025-11-27":0,"2025-11-28":0,"2025-11-29":0,"2025-11-30":0,"2025-12-01":0,"2025-12-02":0,"2025-12-03":0,"2025-12-04":0,"2025-12-05":0,"2025-12-06":0,"2025-12-07":0,"2025-12-08":0,"2025-12-09":0,"2025-12-10":0,"2025-12-11":0,"2025-12-12":0,"2025-12-13":0,"2025-12-14":0,"2025-12-15":0,"2025-12-16":0,"2025-12-17":0.01,"2025-12-18":0,"2025-12-19":0,"2025-12-20":0,"2025-12-21":0.08,"2025-12-22":0.34,"2025-12-23":0.07,"2025-12-24":1.27,"2025-12-25":0.99,"2025-12-26":0.09,"2025-12-27":0,"2025-12-28":0,"2025-12-29":0,"2025-12-30":0,"2025-12-31":0.79,"2026-01-01":0.63,"2026-01-02":0.11,"2026-01-03":0.10,"2026-01-04":1.22,"2026-01-05":0.85,"2026-01-06":0.02,"2026-01-07":0.03,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0.39,"2026-02-11":0.11,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0};
+
+const dates = Object.keys(DATA).sort();
+const total = Object.values(DATA).reduce((a,b) => a+b, 0);
+
+// Top 10
+const ranked = dates.filter(d => DATA[d] > 0)
+  .sort((a,b) => DATA[b] - DATA[a])
+  .slice(0, 10);
+
+const maxVal = DATA[ranked[0]];
+const GRADIENTS = [
+  ['#f0c040','#e6960a'], // gold
+  ['#6ee7e7','#34c6c6'], // teal
+  ['#5f7d9a','#3d566e'], // slate
+];
+
+const list = document.getElementById('list');
+const detail = document.getElementById('detail');
+
+function dayName(d) { return new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'long'}); }
+function monthDay(d) { return new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+
+// Find surrounding context for a date
+function getContext(dateStr) {
+  const idx = dates.indexOf(dateStr);
+  const before = [], after = [];
+  for (let i = Math.max(0, idx-3); i < idx; i++) before.push(`${dates[i]}: ${DATA[dates[i]].toFixed(2)}"`);
+  for (let i = idx+1; i <= Math.min(dates.length-1, idx+3); i++) after.push(`${dates[i]}: ${DATA[dates[i]].toFixed(2)}"`);
+  return { before, after };
+}
+
+ranked.forEach((d, i) => {
+  const val = DATA[d];
+  const pct = (val / total * 100);
+  const gradIdx = i === 0 ? 0 : i < 3 ? 1 : 2;
+  const grad = GRADIENTS[gradIdx];
+  const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+
+  const row = document.createElement('div');
+  row.className = 'storm';
+  row.innerHTML = `
+    <div class="rank ${rankClass}">${i+1}</div>
+    <div class="info"><div class="date">${monthDay(d)}</div><div class="day">${dayName(d)}</div></div>
+    <div class="bar-container">
+      <div class="bar-fill" style="width:0%;background:linear-gradient(90deg,${grad[0]},${grad[1]})">
+        <span class="bar-val">${val.toFixed(2)}"</span>
+      </div>
+    </div>
+    <div class="pct">${pct.toFixed(1)}%</div>
+  `;
+
+  row.addEventListener('click', () => {
+    const ctx = getContext(d);
+    detail.style.display = 'block';
+    detail.innerHTML = `<h3>#${i+1} — ${dayName(d)}, ${monthDay(d)} — ${val.toFixed(2)}"</h3>
+      <div class="context">
+        This single day delivered <strong>${pct.toFixed(1)}%</strong> of the season's total rainfall.<br><br>
+        <strong>3 days before:</strong> ${ctx.before.join(' → ') || 'season start'}<br>
+        <strong>3 days after:</strong> ${ctx.after.join(' → ') || 'no data yet'}
+      </div>`;
+  });
+
+  list.appendChild(row);
+
+  // Animate bars
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      row.querySelector('.bar-fill').style.width = (val / maxVal * 100) + '%';
+    }, i * 80);
+  });
+});
+</script>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>
+(function(){
+  const btn = document.getElementById('themeToggle');
+  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('light');
+    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+  });
+})();
+</script>
+</body>
+</html>

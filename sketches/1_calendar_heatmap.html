@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sketch 1 — Rain Calendar Heatmap</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --accent-light: #06b6d4;
+    --accent-dark: #164e63;
+    --grid: #e2e8f0;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e2e8f0;
+    --shadow: rgba(0,0,0,0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 24px; }
+  .calendar { display: flex; gap: 16px; flex-wrap: wrap; }
+  .month { display: flex; flex-direction: column; gap: 2px; }
+  .month-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .week-row { display: flex; gap: 2px; }
+  .day { width: 14px; height: 14px; border-radius: 2px; cursor: pointer; position: relative; }
+  .day:hover { outline: 1px solid var(--text-bold); outline-offset: 1px; }
+  .day.empty { visibility: hidden; }
+  .tooltip { position: fixed; background: var(--tooltip-bg); border: 1px solid var(--tooltip-border); padding: 8px 12px;
+             border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10; display: none;
+             box-shadow: 0 4px 20px var(--shadow); }
+  .tooltip .val { color: var(--accent-light); font-weight: bold; }
+  .legend { margin-top: 24px; display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
+  .legend .swatch { width: 14px; height: 14px; border-radius: 2px; }
+  .day-labels { display: flex; flex-direction: column; gap: 2px; margin-right: 4px; font-size: 9px; color: var(--dim); justify-content: flex-start; padding-top: 18px;}
+  .day-labels span { height: 14px; line-height: 14px; }
+</style>
+</head>
+<body>
+<h1>Rain Calendar</h1>
+<p class="subtitle">Oct 2025 – Feb 2026 · Redwood City, CA · each cell = one day</p>
+<div style="display:flex">
+  <div class="day-labels"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+  <div class="calendar" id="cal"></div>
+</div>
+<div class="legend" id="legend"></div>
+<div class="tooltip" id="tip"></div>
+<script>
+const DATA = {"2025-10-01":0,"2025-10-02":0.24,"2025-10-03":0,"2025-10-04":0,"2025-10-05":0,"2025-10-06":0,"2025-10-07":0,"2025-10-08":0,"2025-10-09":0,"2025-10-10":0,"2025-10-11":0,"2025-10-12":0,"2025-10-13":0.53,"2025-10-14":0,"2025-10-15":0.01,"2025-10-16":0,"2025-10-17":0,"2025-10-18":0,"2025-10-19":0,"2025-10-20":0,"2025-10-21":0,"2025-10-22":0,"2025-10-23":0,"2025-10-24":0,"2025-10-25":0,"2025-10-26":0.02,"2025-10-27":0.03,"2025-10-28":0,"2025-10-29":0,"2025-10-30":0,"2025-10-31":0,"2025-11-01":0,"2025-11-02":0,"2025-11-03":0,"2025-11-04":0,"2025-11-05":0.11,"2025-11-06":0,"2025-11-07":0,"2025-11-08":0,"2025-11-09":0,"2025-11-10":0,"2025-11-11":0,"2025-11-12":0,"2025-11-13":1.47,"2025-11-14":0,"2025-11-15":0.22,"2025-11-16":0.29,"2025-11-17":0.68,"2025-11-18":0.01,"2025-11-19":0,"2025-11-20":0.24,"2025-11-21":0,"2025-11-22":0,"2025-11-23":0,"2025-11-24":0,"2025-11-25":0,"2025-11-26":0,"2025-11-27":0,"2025-11-28":0,"2025-11-29":0,"2025-11-30":0,"2025-12-01":0,"2025-12-02":0,"2025-12-03":0,"2025-12-04":0,"2025-12-05":0,"2025-12-06":0,"2025-12-07":0,"2025-12-08":0,"2025-12-09":0,"2025-12-10":0,"2025-12-11":0,"2025-12-12":0,"2025-12-13":0,"2025-12-14":0,"2025-12-15":0,"2025-12-16":0,"2025-12-17":0.01,"2025-12-18":0,"2025-12-19":0,"2025-12-20":0,"2025-12-21":0.08,"2025-12-22":0.34,"2025-12-23":0.07,"2025-12-24":1.27,"2025-12-25":0.99,"2025-12-26":0.09,"2025-12-27":0,"2025-12-28":0,"2025-12-29":0,"2025-12-30":0,"2025-12-31":0.79,"2026-01-01":0.63,"2026-01-02":0.11,"2026-01-03":0.10,"2026-01-04":1.22,"2026-01-05":0.85,"2026-01-06":0.02,"2026-01-07":0.03,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0.39,"2026-02-11":0.11,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0};
+
+const COLORS_DARK = ['#0f1923','#0c3547','#0e5a6f','#1a8a8a','#34c6c6','#6ee7e7'];
+const COLORS_LIGHT = ['#e2e8f0','#b2d8e8','#7cc5d9','#4db8c4','#0891b2','#0e7490'];
+const EMPTY_DARK = '#080b12';
+const EMPTY_LIGHT = '#f0f0f4';
+
+function isLight() { return document.body.classList.contains('light'); }
+function getColors() { return isLight() ? COLORS_LIGHT : COLORS_DARK; }
+function getEmpty() { return isLight() ? EMPTY_LIGHT : EMPTY_DARK; }
+
+function color(v) {
+  const C = getColors();
+  if (v <= 0) return C[0];
+  if (v < 0.05) return C[1];
+  if (v < 0.2) return C[2];
+  if (v < 0.5) return C[3];
+  if (v < 1.0) return C[4];
+  return C[5];
+}
+
+const cal = document.getElementById('cal');
+const tip = document.getElementById('tip');
+const months = ['2025-10','2025-11','2025-12','2026-01','2026-02'];
+const mNames = ['October','November','December','January','February'];
+
+function renderCalendar() {
+  cal.innerHTML = '';
+  months.forEach((m,mi) => {
+    const div = document.createElement('div');
+    div.className = 'month';
+    const lbl = document.createElement('div');
+    lbl.className = 'month-label';
+    lbl.textContent = mNames[mi];
+    div.appendChild(lbl);
+
+    const first = new Date(m + '-01');
+    const daysInMonth = new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+    // Monday=0 ... Sunday=6
+    let startDay = (first.getDay() + 6) % 7;
+
+    let week = document.createElement('div');
+    week.className = 'week-row';
+    for (let i = 0; i < startDay; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'day empty';
+      week.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = m + '-' + String(d).padStart(2,'0');
+      const val = DATA[key] ?? null;
+      const cell = document.createElement('div');
+      cell.className = 'day';
+      cell.style.background = val !== null ? color(val) : getEmpty();
+      cell.dataset.date = key;
+      cell.dataset.val = val !== null ? val.toFixed(2) : 'N/A';
+      week.appendChild(cell);
+      if ((startDay + d) % 7 === 0) {
+        div.appendChild(week);
+        week = document.createElement('div');
+        week.className = 'week-row';
+      }
+    }
+    if (week.children.length) div.appendChild(week);
+    cal.appendChild(div);
+  });
+}
+
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  const C = getColors();
+  legend.innerHTML = '<span>Dry</span>' +
+    C.map(c => `<div class="swatch" style="background:${c}"></div>`).join('') +
+    '<span>Heavy</span>';
+}
+
+function renderAll() {
+  renderCalendar();
+  renderLegend();
+}
+
+renderAll();
+
+cal.addEventListener('mousemove', e => {
+  const d = e.target.closest('.day:not(.empty)');
+  if (!d) { tip.style.display = 'none'; return; }
+  tip.innerHTML = `${d.dataset.date}<br><span class="val">${d.dataset.val} in</span>`;
+  tip.style.display = 'block';
+  tip.style.left = e.clientX + 12 + 'px';
+  tip.style.top = e.clientY - 10 + 'px';
+});
+cal.addEventListener('mouseleave', () => tip.style.display = 'none');
+</script>
+<button id="themeToggle" onclick="document.body.classList.toggle('light');this.textContent=document.body.classList.contains('light')?'Dark':'Light';renderAll();" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');document.getElementById('themeToggle').textContent='Dark';renderAll();}</script>
+</body>
+</html>

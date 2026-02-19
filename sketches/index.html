@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NOAA Rainfall Sketches</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --bg-deep: #080b12;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --bg-deep: #f0f0f4;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --accent-light: #06b6d4;
+    --accent-dark: #164e63;
+    --grid: #e2e8f0;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e2e8f0;
+    --shadow: rgba(0,0,0,0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+          transition: transform 0.2s, border-color 0.2s; position: relative; }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card .number { font-size: 32px; font-weight: bold; color: var(--accent); margin-bottom: 8px; line-height: 1; }
+  .card .title { font-size: 16px; font-weight: bold; color: var(--text-bold); margin-bottom: 4px; }
+  .card .desc { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+  .card .links { display: flex; gap: 12px; }
+  .card .links a { font-size: 11px; color: var(--accent); text-decoration: none; padding: 4px 10px;
+                   border: 1px solid var(--border); border-radius: 4px; transition: border-color 0.2s, background 0.2s; }
+  .card .links a:hover { border-color: var(--accent); background: var(--bg-deep); }
+  .card .links a.light-link { color: var(--dim); }
+  .card .links a.light-link:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<h1>NOAA Rainfall Sketches</h1>
+<p class="subtitle">Palo Alto rain season 2025-26 · 8 data visualization concepts</p>
+<div class="grid" id="grid"></div>
+<script>
+const SKETCHES = [
+  { num: 1, file: '1_calendar_heatmap.html',  title: 'Rain Calendar',         desc: 'GitHub-style heatmap, one cell per day' },
+  { num: 2, file: '2_cumulative_curve.html',   title: 'Cumulative Curve',      desc: 'Season total vs. 30-year historical average' },
+  { num: 3, file: '3_drought_streaks.html',    title: 'Drought & Rain Streaks', desc: 'Consecutive dry/wet runs as proportional blocks' },
+  { num: 4, file: '4_storm_rankings.html',     title: 'Storm Power Rankings',  desc: 'Top 10 wettest days, animated bar race' },
+  { num: 5, file: '5_weekday_bias.html',       title: 'Weekend Rain Bias',     desc: 'Average daily rainfall by day of week' },
+  { num: 6, file: '6_rhythm_sparklines.html',  title: 'Rain Rhythm',           desc: "Each month's daily rainfall as a sparkline" },
+  { num: 7, file: '7_fill_gauge.html',         title: 'Season Fill Gauge',     desc: 'Animated water level vs. 15.5" target' },
+  { num: 8, file: '8_rain_in_objects.html',    title: 'Your Rain in Objects',  desc: '10.95" translated into bathtubs, elephants, coffees' },
+];
+
+const grid = document.getElementById('grid');
+const isLight = () => document.body.classList.contains('light');
+
+function renderCards() {
+  grid.innerHTML = '';
+  SKETCHES.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const lightParam = isLight() ? '?light' : '';
+    card.innerHTML = `
+      <div class="number">${String(s.num).padStart(2, '0')}</div>
+      <div class="title">${s.title}</div>
+      <div class="desc">${s.desc}</div>
+      <div class="links">
+        <a href="${s.file}${lightParam}" class="sketch-link">Open sketch</a>
+        <a href="${s.file}?light" class="light-link">Open in light mode</a>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+renderCards();
+
+// Keep links in sync when theme toggles
+const observer = new MutationObserver(() => {
+  const links = document.querySelectorAll('.sketch-link');
+  const lightSuffix = isLight() ? '?light' : '';
+  links.forEach((a, i) => {
+    a.href = SKETCHES[i].file + lightSuffix;
+  });
+});
+observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+</script>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>
+(function(){
+  const btn = document.getElementById('themeToggle');
+  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('light');
+    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+  });
+})();
+</script>
+</body>
+</html>

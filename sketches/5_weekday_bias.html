@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sketch 5 — Does It Rain More on Weekends?</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --shadow: rgba(0,0,0,0.5);
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --shadow: rgba(0,0,0,0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 28px; }
+  .chart { display: flex; align-items: flex-end; gap: 12px; height: 260px; padding: 0 20px; }
+  .col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; position: relative; }
+  .bar-wrap { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; }
+  .bar { width: 36px; border-radius: 4px 4px 0 0; transition: height 0.5s ease-out; position: relative; cursor: pointer; }
+  .bar:hover { filter: brightness(1.2); }
+  .bar-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: bold; }
+  .day-label { margin-top: 8px; font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .day-label.weekend { color: #c9a033; }
+  .sub-label { font-size: 9px; color: var(--dim); margin-top: 2px; }
+  .verdict { margin-top: 32px; padding: 20px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+  .verdict h2 { font-size: 16px; margin-bottom: 8px; }
+  .verdict p { font-size: 12px; color: var(--muted); }
+  .split-bars { display: flex; gap: 4px; align-items: flex-end; }
+  .mini-bar { width: 16px; border-radius: 2px 2px 0 0; }
+</style>
+</head>
+<body>
+<h1>Weekend Rain Bias</h1>
+<p class="subtitle">Average daily rainfall by day of week · does the universe hate your Saturday plans?</p>
+<div class="chart" id="chart"></div>
+<div class="verdict" id="verdict"></div>
+<script>
+const DATA = {"2025-10-01":0,"2025-10-02":0.24,"2025-10-03":0,"2025-10-04":0,"2025-10-05":0,"2025-10-06":0,"2025-10-07":0,"2025-10-08":0,"2025-10-09":0,"2025-10-10":0,"2025-10-11":0,"2025-10-12":0,"2025-10-13":0.53,"2025-10-14":0,"2025-10-15":0.01,"2025-10-16":0,"2025-10-17":0,"2025-10-18":0,"2025-10-19":0,"2025-10-20":0,"2025-10-21":0,"2025-10-22":0,"2025-10-23":0,"2025-10-24":0,"2025-10-25":0,"2025-10-26":0.02,"2025-10-27":0.03,"2025-10-28":0,"2025-10-29":0,"2025-10-30":0,"2025-10-31":0,"2025-11-01":0,"2025-11-02":0,"2025-11-03":0,"2025-11-04":0,"2025-11-05":0.11,"2025-11-06":0,"2025-11-07":0,"2025-11-08":0,"2025-11-09":0,"2025-11-10":0,"2025-11-11":0,"2025-11-12":0,"2025-11-13":1.47,"2025-11-14":0,"2025-11-15":0.22,"2025-11-16":0.29,"2025-11-17":0.68,"2025-11-18":0.01,"2025-11-19":0,"2025-11-20":0.24,"2025-11-21":0,"2025-11-22":0,"2025-11-23":0,"2025-11-24":0,"2025-11-25":0,"2025-11-26":0,"2025-11-27":0,"2025-11-28":0,"2025-11-29":0,"2025-11-30":0,"2025-12-01":0,"2025-12-02":0,"2025-12-03":0,"2025-12-04":0,"2025-12-05":0,"2025-12-06":0,"2025-12-07":0,"2025-12-08":0,"2025-12-09":0,"2025-12-10":0,"2025-12-11":0,"2025-12-12":0,"2025-12-13":0,"2025-12-14":0,"2025-12-15":0,"2025-12-16":0,"2025-12-17":0.01,"2025-12-18":0,"2025-12-19":0,"2025-12-20":0,"2025-12-21":0.08,"2025-12-22":0.34,"2025-12-23":0.07,"2025-12-24":1.27,"2025-12-25":0.99,"2025-12-26":0.09,"2025-12-27":0,"2025-12-28":0,"2025-12-29":0,"2025-12-30":0,"2025-12-31":0.79,"2026-01-01":0.63,"2026-01-02":0.11,"2026-01-03":0.10,"2026-01-04":1.22,"2026-01-05":0.85,"2026-01-06":0.02,"2026-01-07":0.03,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0.39,"2026-02-11":0.11,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0};
+
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const dayTotals = Array(7).fill(0);
+const dayCounts = Array(7).fill(0);
+const dayRainDays = Array(7).fill(0);
+
+Object.keys(DATA).forEach(d => {
+  const dow = (new Date(d + 'T12:00').getDay() + 6) % 7; // Mon=0
+  dayTotals[dow] += DATA[d];
+  dayCounts[dow]++;
+  if (DATA[d] > 0) dayRainDays[dow]++;
+});
+
+const dayAvg = dayTotals.map((t,i) => dayCounts[i] ? t / dayCounts[i] : 0);
+const maxAvg = Math.max(...dayAvg);
+
+const isLight = () => document.body.classList.contains('light');
+
+function renderChart() {
+  const chart = document.getElementById('chart');
+  chart.innerHTML = '';
+
+  DAYS.forEach((name, i) => {
+    const col = document.createElement('div');
+    col.className = 'col';
+    const isWeekend = i >= 5;
+    const pct = maxAvg > 0 ? (dayAvg[i] / maxAvg * 200) : 0;
+    const color = isWeekend
+      ? 'linear-gradient(0deg, #8a6d1b, #c9a033)'
+      : isLight()
+        ? 'linear-gradient(0deg, #7dd3e0, #0891b2)'
+        : 'linear-gradient(0deg, #0e5a6f, #34c6c6)';
+    const valColor = isWeekend
+      ? '#c9a033'
+      : isLight() ? '#0891b2' : '#34c6c6';
+
+    col.innerHTML = `
+      <div class="bar-wrap">
+        <div class="bar" style="height:${pct}px;background:${color}">
+          <div class="bar-val" style="color:${valColor}">${dayAvg[i].toFixed(3)}"</div>
+        </div>
+      </div>
+      <div class="day-label ${isWeekend ? 'weekend' : ''}">${name}</div>
+      <div class="sub-label">${dayRainDays[i]}/${dayCounts[i]} wet</div>
+    `;
+    chart.appendChild(col);
+  });
+}
+
+function renderVerdict() {
+  const weekdayAvg = dayAvg.slice(0,5).reduce((a,b)=>a+b,0)/5;
+  const weekendAvg = dayAvg.slice(5).reduce((a,b)=>a+b,0)/2;
+  const ratio = weekendAvg / (weekdayAvg || 0.001);
+  const v = document.getElementById('verdict');
+
+  let emoji, msg;
+  if (ratio > 1.3) { emoji = '\u{1F624}'; msg = `Weekends get ${((ratio-1)*100).toFixed(0)}% more rain. The universe IS conspiring against your plans.`; }
+  else if (ratio > 0.7) { emoji = '\u{1F937}'; msg = `About even (${ratio.toFixed(2)}x). No conspiracy detected... this time.`; }
+  else { emoji = '\u{1F389}'; msg = `Weekdays get MORE rain! Your weekends are statistically blessed.`; }
+
+  const dimColor = isLight() ? '#94a3b8' : '#3d566e';
+  v.innerHTML = `<h2>${emoji} The Verdict</h2><p>${msg}</p><p style="margin-top:8px;font-size:10px;color:${dimColor}">Weekday avg: ${weekdayAvg.toFixed(3)}" / day · Weekend avg: ${weekendAvg.toFixed(3)}" / day</p>`;
+}
+
+function renderAll() {
+  renderChart();
+  renderVerdict();
+}
+
+renderAll();
+</script>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>
+(function(){
+  const btn = document.getElementById('themeToggle');
+  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('light');
+    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+    renderAll();
+  });
+  // Re-render if started in light mode
+  if(document.body.classList.contains('light')) renderAll();
+})();
+</script>
+</body>
+</html>

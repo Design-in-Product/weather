@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sketch 8 — Your Rain in Objects</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --bg-deep: #080b12;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --bg-deep: #f0f0f4;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --accent-light: #06b6d4;
+    --accent-dark: #164e63;
+    --grid: #e2e8f0;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e2e8f0;
+    --shadow: rgba(0,0,0,0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 32px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+          cursor: pointer; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card .icon { font-size: 48px; margin-bottom: 12px; }
+  .card .headline { font-size: 22px; font-weight: bold; color: var(--text-bold); margin-bottom: 4px; }
+  .card .headline .accent { color: var(--accent); }
+  .card .explain { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .card .math { font-size: 9px; color: var(--dim); margin-top: 12px; font-style: italic; }
+  .card .viz { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 3px; }
+  .card .viz span { font-size: 14px; opacity: 0; animation: popIn 0.1s ease-out forwards; }
+  .card .viz .overflow-count { color: var(--dim); }
+  @keyframes popIn { to { opacity: 1; transform: scale(1); } from { opacity: 0; transform: scale(0.5); } }
+  .total-bar { margin-top: 32px; padding: 20px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+  .total-bar .big { font-size: 36px; font-weight: bold; }
+  .total-bar .big .num { color: var(--accent); }
+  .total-bar .desc { font-size: 12px; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Your Rain in Objects</h1>
+<p class="subtitle">10.95 inches of rain on your 1,500 sq ft roof this season, translated into things you can picture</p>
+<div class="cards" id="cards"></div>
+<div class="total-bar">
+  <div class="big">That's <span class="num" id="gallons">—</span> gallons</div>
+  <div class="desc">of free water that fell on your roof since October 1</div>
+</div>
+<script>
+// 10.95 inches on a 1500 sqft roof
+const INCHES = 10.95;
+const SQFT = 1500;
+const GALLONS = INCHES / 12 * SQFT * 7.48052; // cubic feet to gallons
+// ~10,224 gallons
+
+const COMPARISONS = [
+  {
+    icon: '🛁',
+    unit: 'bathtubs',
+    perUnit: 50, // gallons per bathtub
+    headline: (n) => `<span class="accent">${n}</span> bathtubs`,
+    explain: 'Filled to the brim. That\'s roughly one bath every 16 hours since October.',
+    vizIcon: '🛁',
+    vizMax: 40,
+  },
+  {
+    icon: '🏊',
+    unit: 'kiddie pools',
+    perUnit: 170,
+    headline: (n) => `<span class="accent">${n}</span> kiddie pools`,
+    explain: 'The classic 5-foot round backyard pool. Enough for every kid on your block, twice over.',
+    vizIcon: '🏊',
+    vizMax: 30,
+  },
+  {
+    icon: '☕',
+    unit: 'cups of coffee',
+    perUnit: 0.042, // ~6.7 oz = 0.042 gallons
+    headline: (n) => `<span class="accent">${n.toLocaleString()}</span> coffees`,
+    explain: 'Pour yourself a cup. Then do it a quarter-million more times.',
+    vizIcon: '☕',
+    vizMax: 50,
+  },
+  {
+    icon: '🚿',
+    unit: 'showers',
+    perUnit: 17, // gallons for an 8-minute shower
+    headline: (n) => `<span class="accent">${n}</span> showers`,
+    explain: 'At 8 minutes each with a low-flow head. That\'s over a year of daily showers for the whole family.',
+    vizIcon: '🚿',
+    vizMax: 40,
+  },
+  {
+    icon: '💧',
+    unit: 'water bottles',
+    perUnit: 0.132, // 16.9 oz = 0.132 gal
+    headline: (n) => `<span class="accent">${n.toLocaleString()}</span> water bottles`,
+    explain: 'Standard 16.9 oz bottles, stacked end to end: about half a mile long.',
+    vizIcon: '💧',
+    vizMax: 50,
+  },
+  {
+    icon: '🐘',
+    unit: 'elephant drinks',
+    perUnit: 50, // elephants drink ~50 gal/day
+    headline: (n) => `<span class="accent">${n}</span> elephant-days`,
+    explain: 'An African elephant drinks about 50 gallons a day. Your roof could hydrate one for half a year.',
+    vizIcon: '🐘',
+    vizMax: 30,
+  },
+  {
+    icon: '🧺',
+    unit: 'laundry loads',
+    perUnit: 15,
+    headline: (n) => `<span class="accent">${n}</span> loads of laundry`,
+    explain: 'In a modern HE washer. About 4.5 loads every single day since the season started.',
+    vizIcon: '🧺',
+    vizMax: 40,
+  },
+  {
+    icon: '🫗',
+    unit: 'gallon jugs',
+    perUnit: 1,
+    headline: (n) => `<span class="accent">${n.toLocaleString()}</span> gallon jugs`,
+    explain: 'Lined up single-file, they\'d stretch about 2 miles down El Camino.',
+    vizIcon: '🫗',
+    vizMax: 50,
+  },
+];
+
+const cards = document.getElementById('cards');
+
+COMPARISONS.forEach((c, ci) => {
+  const count = Math.round(GALLONS / c.perUnit);
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const vizCount = Math.min(count, c.vizMax);
+  let vizHTML = '';
+  for (let i = 0; i < vizCount; i++) {
+    vizHTML += `<span style="animation-delay:${ci * 0.05 + i * 0.02}s">${c.vizIcon}</span>`;
+  }
+  if (count > c.vizMax) vizHTML += `<span class="overflow-count" style="animation-delay:${ci * 0.05 + vizCount * 0.02}s;font-size:11px">+${(count - c.vizMax).toLocaleString()}</span>`;
+
+  card.innerHTML = `
+    <div class="icon">${c.icon}</div>
+    <div class="headline">${c.headline(count)}</div>
+    <div class="explain">${c.explain}</div>
+    <div class="viz">${vizHTML}</div>
+    <div class="math">${GALLONS.toFixed(0)} gal ÷ ${c.perUnit} gal/${c.unit.replace(/s$/, '')} = ${count.toLocaleString()}</div>
+  `;
+  cards.appendChild(card);
+});
+
+// Animate total
+const galEl = document.getElementById('gallons');
+let cur = 0;
+const target = Math.round(GALLONS);
+const step = Math.ceil(target / 50);
+function tick() {
+  cur = Math.min(cur + step, target);
+  galEl.textContent = cur.toLocaleString();
+  if (cur < target) requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>
+(function(){
+  const btn = document.getElementById('themeToggle');
+  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('light');
+    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+  });
+})();
+</script>
+</body>
+</html>

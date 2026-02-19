@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sketch 3 — Drought & Rain Streaks</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+    --dry-grad-1: #1a1a2e;
+    --dry-grad-2: #16213e;
+    --dry-border: #1a2332;
+    --wet-grad-1: #0c3547;
+    --wet-grad-2: #1a8a8a;
+    --wet-border: #34c6c6;
+    --dry-color: #c9a033;
+    --wet-color: #34c6c6;
+    --streak-label: #5f7d9a;
+    --wet-streak-label: #c8d6e5;
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --accent-light: #06b6d4;
+    --accent-dark: #164e63;
+    --grid: #e2e8f0;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e2e8f0;
+    --shadow: rgba(0,0,0,0.1);
+    --dry-grad-1: #f1f5f9;
+    --dry-grad-2: #e2e8f0;
+    --dry-border: #e2e8f0;
+    --wet-grad-1: #b2e2e8;
+    --wet-grad-2: #7dd3e0;
+    --wet-border: #0891b2;
+    --dry-color: #b8860b;
+    --wet-color: #0891b2;
+    --streak-label: #64748b;
+    --wet-streak-label: #1a202c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 24px; }
+  .timeline { position: relative; margin: 20px 0; }
+  .streak { display: inline-flex; align-items: center; height: 40px; border-radius: 4px; margin: 2px 0;
+            position: relative; cursor: pointer; transition: filter 0.15s; vertical-align: top; }
+  .streak:hover { filter: brightness(1.3); }
+  .streak.dry { background: linear-gradient(135deg, var(--dry-grad-1), var(--dry-grad-2)); border: 1px solid var(--dry-border); }
+  .streak.wet { background: linear-gradient(135deg, var(--wet-grad-1), var(--wet-grad-2)); border: 1px solid var(--wet-border); }
+  .streak-label { font-size: 9px; color: var(--streak-label); padding: 0 6px; white-space: nowrap; overflow: hidden; }
+  .streak.wet .streak-label { color: var(--wet-streak-label); }
+  .stats { margin-top: 24px; display: flex; gap: 40px; }
+  .stat-block { padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); min-width: 180px; }
+  .stat-block h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .big-num { font-size: 32px; font-weight: bold; }
+  .big-num.dry-color { color: var(--dry-color); }
+  .big-num.wet-color { color: var(--wet-color); }
+  .detail { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .tooltip { position: fixed; background: var(--tooltip-bg); border: 1px solid var(--tooltip-border); padding: 10px 14px;
+             border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10; display: none;
+             box-shadow: 0 4px 20px var(--shadow); max-width: 240px; }
+</style>
+</head>
+<body>
+<h1>Dry & Wet Streaks</h1>
+<p class="subtitle">Every consecutive run of dry or rainy days this season · hover for details</p>
+<div class="timeline" id="timeline"></div>
+<div class="stats" id="stats"></div>
+<div class="tooltip" id="tip"></div>
+<script>
+const DATA = {"2025-10-01":0,"2025-10-02":0.24,"2025-10-03":0,"2025-10-04":0,"2025-10-05":0,"2025-10-06":0,"2025-10-07":0,"2025-10-08":0,"2025-10-09":0,"2025-10-10":0,"2025-10-11":0,"2025-10-12":0,"2025-10-13":0.53,"2025-10-14":0,"2025-10-15":0.01,"2025-10-16":0,"2025-10-17":0,"2025-10-18":0,"2025-10-19":0,"2025-10-20":0,"2025-10-21":0,"2025-10-22":0,"2025-10-23":0,"2025-10-24":0,"2025-10-25":0,"2025-10-26":0.02,"2025-10-27":0.03,"2025-10-28":0,"2025-10-29":0,"2025-10-30":0,"2025-10-31":0,"2025-11-01":0,"2025-11-02":0,"2025-11-03":0,"2025-11-04":0,"2025-11-05":0.11,"2025-11-06":0,"2025-11-07":0,"2025-11-08":0,"2025-11-09":0,"2025-11-10":0,"2025-11-11":0,"2025-11-12":0,"2025-11-13":1.47,"2025-11-14":0,"2025-11-15":0.22,"2025-11-16":0.29,"2025-11-17":0.68,"2025-11-18":0.01,"2025-11-19":0,"2025-11-20":0.24,"2025-11-21":0,"2025-11-22":0,"2025-11-23":0,"2025-11-24":0,"2025-11-25":0,"2025-11-26":0,"2025-11-27":0,"2025-11-28":0,"2025-11-29":0,"2025-11-30":0,"2025-12-01":0,"2025-12-02":0,"2025-12-03":0,"2025-12-04":0,"2025-12-05":0,"2025-12-06":0,"2025-12-07":0,"2025-12-08":0,"2025-12-09":0,"2025-12-10":0,"2025-12-11":0,"2025-12-12":0,"2025-12-13":0,"2025-12-14":0,"2025-12-15":0,"2025-12-16":0,"2025-12-17":0.01,"2025-12-18":0,"2025-12-19":0,"2025-12-20":0,"2025-12-21":0.08,"2025-12-22":0.34,"2025-12-23":0.07,"2025-12-24":1.27,"2025-12-25":0.99,"2025-12-26":0.09,"2025-12-27":0,"2025-12-28":0,"2025-12-29":0,"2025-12-30":0,"2025-12-31":0.79,"2026-01-01":0.63,"2026-01-02":0.11,"2026-01-03":0.10,"2026-01-04":1.22,"2026-01-05":0.85,"2026-01-06":0.02,"2026-01-07":0.03,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0.39,"2026-02-11":0.11,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0};
+
+const dates = Object.keys(DATA).sort();
+const totalDays = dates.length;
+
+// Build streaks
+let streaks = [];
+let cur = { wet: DATA[dates[0]] > 0, start: dates[0], days: [dates[0]], total: DATA[dates[0]] };
+for (let i = 1; i < dates.length; i++) {
+  const isWet = DATA[dates[i]] > 0;
+  if (isWet === cur.wet) {
+    cur.days.push(dates[i]);
+    cur.total += DATA[dates[i]];
+  } else {
+    cur.end = cur.days[cur.days.length - 1];
+    streaks.push(cur);
+    cur = { wet: isWet, start: dates[i], days: [dates[i]], total: DATA[dates[i]] };
+  }
+}
+cur.end = cur.days[cur.days.length - 1];
+streaks.push(cur);
+
+// Render timeline
+const tl = document.getElementById('timeline');
+const tip = document.getElementById('tip');
+const minW = 3;
+
+streaks.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = `streak ${s.wet ? 'wet' : 'dry'}`;
+  const w = Math.max(minW, (s.days.length / totalDays) * 680);
+  el.style.width = w + 'px';
+  const lbl = document.createElement('span');
+  lbl.className = 'streak-label';
+  if (w > 30) lbl.textContent = s.days.length + 'd';
+  el.appendChild(lbl);
+  el.addEventListener('mouseenter', e => {
+    const type = s.wet ? '\u{1F327} Rain streak' : '\u{2600}\u{FE0F} Dry streak';
+    tip.innerHTML = `<strong>${type}</strong><br>${s.start} \u2192 ${s.end}<br>` +
+      `<strong>${s.days.length}</strong> days` +
+      (s.wet ? `<br>Total: <strong>${s.total.toFixed(2)}"</strong>` : '');
+    tip.style.display = 'block';
+  });
+  el.addEventListener('mousemove', e => {
+    tip.style.left = e.clientX + 14 + 'px';
+    tip.style.top = e.clientY + 14 + 'px';
+  });
+  el.addEventListener('mouseleave', () => tip.style.display = 'none');
+  tl.appendChild(el);
+});
+
+// Stats
+const dryStreaks = streaks.filter(s => !s.wet).sort((a,b) => b.days.length - a.days.length);
+const wetStreaks = streaks.filter(s => s.wet).sort((a,b) => b.days.length - a.days.length);
+const longestDry = dryStreaks[0];
+const longestWet = wetStreaks[0];
+// Current streak
+const current = streaks[streaks.length - 1];
+
+const statsEl = document.getElementById('stats');
+statsEl.innerHTML = `
+  <div class="stat-block">
+    <h3>Longest dry spell</h3>
+    <div class="big-num dry-color">${longestDry.days.length} days</div>
+    <div class="detail">${longestDry.start} \u2192 ${longestDry.end}</div>
+  </div>
+  <div class="stat-block">
+    <h3>Longest wet spell</h3>
+    <div class="big-num wet-color">${longestWet.days.length} days</div>
+    <div class="detail">${longestWet.start} \u2192 ${longestWet.end} \u00b7 ${longestWet.total.toFixed(2)}"</div>
+  </div>
+  <div class="stat-block">
+    <h3>Current streak</h3>
+    <div class="big-num ${current.wet ? 'wet-color' : 'dry-color'}">${current.days.length} days</div>
+    <div class="detail">${current.wet ? 'wet' : 'dry'} since ${current.start}</div>
+  </div>
+`;
+</script>
+<button id="themeToggle" onclick="document.body.classList.toggle('light');this.textContent=document.body.classList.contains('light')?'Dark':'Light'" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');document.getElementById('themeToggle').textContent='Dark'}</script>
+</body>
+</html>

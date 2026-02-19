@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sketch 2 — Cumulative Rain Curve</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+  }
+  body.light {
+    --bg: #f5f7fa;
+    --bg-card: #ffffff;
+    --text: #2d3748;
+    --text-bold: #1a202c;
+    --muted: #64748b;
+    --dim: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #0891b2;
+    --accent-light: #06b6d4;
+    --accent-dark: #164e63;
+    --grid: #e2e8f0;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e2e8f0;
+    --shadow: rgba(0,0,0,0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: var(--dim); margin-bottom: 24px; }
+  canvas { display: block; }
+  .legend-row { display: flex; gap: 20px; margin-top: 12px; font-size: 11px; }
+  .legend-row span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .stat-row { margin-top: 20px; display: flex; gap: 32px; }
+  .stat { text-align: center; }
+  .stat .num { font-size: 28px; font-weight: bold; color: var(--accent); }
+  .stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<h1>Cumulative Season Curve</h1>
+<p class="subtitle">This season vs. 30-year Redwood City average (~15.5 in) · hover to inspect</p>
+<canvas id="chart" width="720" height="340"></canvas>
+<div class="legend-row" id="legendRow"></div>
+<div class="stat-row">
+  <div class="stat"><div class="num" id="totalVal">—</div><div class="label">Season total</div></div>
+  <div class="stat"><div class="num" id="pctVal">—</div><div class="label">% of avg</div></div>
+  <div class="stat"><div class="num" id="daysVal">—</div><div class="label">Rain days</div></div>
+</div>
+<div class="tooltip" id="tip" style="position:fixed;background:var(--tooltip-bg);border:1px solid var(--tooltip-border);padding:8px 12px;border-radius:6px;font-size:11px;pointer-events:none;z-index:10;display:none;box-shadow:0 4px 20px var(--shadow)"></div>
+<script>
+const RAW = {"2025-10-01":0,"2025-10-02":0.24,"2025-10-03":0,"2025-10-04":0,"2025-10-05":0,"2025-10-06":0,"2025-10-07":0,"2025-10-08":0,"2025-10-09":0,"2025-10-10":0,"2025-10-11":0,"2025-10-12":0,"2025-10-13":0.53,"2025-10-14":0,"2025-10-15":0.01,"2025-10-16":0,"2025-10-17":0,"2025-10-18":0,"2025-10-19":0,"2025-10-20":0,"2025-10-21":0,"2025-10-22":0,"2025-10-23":0,"2025-10-24":0,"2025-10-25":0,"2025-10-26":0.02,"2025-10-27":0.03,"2025-10-28":0,"2025-10-29":0,"2025-10-30":0,"2025-10-31":0,"2025-11-01":0,"2025-11-02":0,"2025-11-03":0,"2025-11-04":0,"2025-11-05":0.11,"2025-11-06":0,"2025-11-07":0,"2025-11-08":0,"2025-11-09":0,"2025-11-10":0,"2025-11-11":0,"2025-11-12":0,"2025-11-13":1.47,"2025-11-14":0,"2025-11-15":0.22,"2025-11-16":0.29,"2025-11-17":0.68,"2025-11-18":0.01,"2025-11-19":0,"2025-11-20":0.24,"2025-11-21":0,"2025-11-22":0,"2025-11-23":0,"2025-11-24":0,"2025-11-25":0,"2025-11-26":0,"2025-11-27":0,"2025-11-28":0,"2025-11-29":0,"2025-11-30":0,"2025-12-01":0,"2025-12-02":0,"2025-12-03":0,"2025-12-04":0,"2025-12-05":0,"2025-12-06":0,"2025-12-07":0,"2025-12-08":0,"2025-12-09":0,"2025-12-10":0,"2025-12-11":0,"2025-12-12":0,"2025-12-13":0,"2025-12-14":0,"2025-12-15":0,"2025-12-16":0,"2025-12-17":0.01,"2025-12-18":0,"2025-12-19":0,"2025-12-20":0,"2025-12-21":0.08,"2025-12-22":0.34,"2025-12-23":0.07,"2025-12-24":1.27,"2025-12-25":0.99,"2025-12-26":0.09,"2025-12-27":0,"2025-12-28":0,"2025-12-29":0,"2025-12-30":0,"2025-12-31":0.79,"2026-01-01":0.63,"2026-01-02":0.11,"2026-01-03":0.10,"2026-01-04":1.22,"2026-01-05":0.85,"2026-01-06":0.02,"2026-01-07":0.03,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0.39,"2026-02-11":0.11,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0};
+
+// Build cumulative series (day-of-season index)
+const seasonStart = new Date('2025-10-01');
+const dates = Object.keys(RAW).sort();
+let cumulative = [], cum = 0, rainDays = 0;
+dates.forEach(d => {
+  cum += RAW[d];
+  if (RAW[d] > 0) rainDays++;
+  const dayIdx = Math.round((new Date(d) - seasonStart) / 86400000);
+  cumulative.push({ dayIdx, cum, date: d, daily: RAW[d] });
+});
+
+// Approximate historical average: ~15.5 in over 365 days, with typical monthly distribution
+// Oct: 1.1, Nov: 2.5, Dec: 3.5, Jan: 3.2, Feb: 2.8, Mar: 2.4
+const histMonthly = [1.1, 2.5, 3.5, 3.2, 2.8, 2.4];
+const histDaysPerMonth = [31, 30, 31, 31, 28, 31];
+let histCum = [];
+let hc = 0, dayCounter = 0;
+histMonthly.forEach((mTotal, mi) => {
+  const daysInM = histDaysPerMonth[mi];
+  const perDay = mTotal / daysInM;
+  for (let d = 0; d < daysInM; d++) {
+    hc += perDay;
+    histCum.push({ dayIdx: dayCounter++, cum: hc });
+  }
+});
+
+const totalDays = 182; // Oct-Mar approx
+const maxVal = Math.max(cum, hc, 16);
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const PAD = { l: 50, r: 20, t: 20, b: 40 };
+const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
+
+function xScale(dayIdx) { return PAD.l + (dayIdx / totalDays) * cw; }
+function yScale(v) { return PAD.t + ch - (v / maxVal) * ch; }
+
+const mLabels = [{d:0,l:'Oct'},{d:31,l:'Nov'},{d:61,l:'Dec'},{d:92,l:'Jan'},{d:123,l:'Feb'},{d:151,l:'Mar'}];
+const lastPt = cumulative[cumulative.length - 1];
+
+function isLight() { return document.body.classList.contains('light'); }
+
+function getThemeColors() {
+  const light = isLight();
+  return {
+    grid: light ? '#e2e8f0' : '#1a2332',
+    gridText: light ? '#94a3b8' : '#3d566e',
+    monthSep: light ? '#e2e8f0' : '#141d2b',
+    histLine: light ? '#94a3b8' : '#2d4055',
+    actualLine: light ? '#0891b2' : '#34c6c6',
+    fillTop: light ? 'rgba(8,145,178,0.15)' : 'rgba(52,198,198,0.25)',
+    fillBot: light ? 'rgba(8,145,178,0)' : 'rgba(52,198,198,0)',
+    crosshair: light ? 'rgba(8,145,178,0.3)' : 'rgba(110,231,231,0.3)',
+    dot: light ? '#0891b2' : '#6ee7e7',
+    tipMuted: light ? '#64748b' : '#5f7d9a',
+    tipAccent: light ? '#06b6d4' : '#6ee7e7',
+    tipDim: light ? '#94a3b8' : '#3d566e'
+  };
+}
+
+function draw() {
+  const tc = getThemeColors();
+  ctx.clearRect(0, 0, W, H);
+  // Grid
+  ctx.strokeStyle = tc.grid; ctx.lineWidth = 1;
+  for (let v = 0; v <= maxVal; v += 2) {
+    ctx.beginPath(); ctx.moveTo(PAD.l, yScale(v)); ctx.lineTo(W-PAD.r, yScale(v)); ctx.stroke();
+    ctx.fillStyle = tc.gridText; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(v + '"', PAD.l - 8, yScale(v) + 3);
+  }
+  // Month labels
+  ctx.fillStyle = tc.gridText; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+  mLabels.forEach(m => {
+    ctx.fillText(m.l, xScale(m.d), H - PAD.b + 20);
+    ctx.beginPath(); ctx.moveTo(xScale(m.d), PAD.t); ctx.lineTo(xScale(m.d), H-PAD.b); ctx.strokeStyle=tc.monthSep; ctx.stroke();
+  });
+  // Historical avg line
+  ctx.beginPath(); ctx.strokeStyle=tc.histLine; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+  histCum.forEach((p,i) => { if(p.dayIdx>totalDays)return; i===0?ctx.moveTo(xScale(p.dayIdx),yScale(p.cum)):ctx.lineTo(xScale(p.dayIdx),yScale(p.cum)); });
+  ctx.stroke(); ctx.setLineDash([]);
+  // Actual cumulative line
+  ctx.beginPath(); ctx.strokeStyle=tc.actualLine; ctx.lineWidth=2.5;
+  cumulative.forEach((p,i) => { i===0?ctx.moveTo(xScale(p.dayIdx),yScale(p.cum)):ctx.lineTo(xScale(p.dayIdx),yScale(p.cum)); });
+  ctx.stroke();
+  // Fill under actual
+  ctx.beginPath();
+  cumulative.forEach((p,i) => { i===0?ctx.moveTo(xScale(p.dayIdx),yScale(p.cum)):ctx.lineTo(xScale(p.dayIdx),yScale(p.cum)); });
+  ctx.lineTo(xScale(lastPt.dayIdx),yScale(0)); ctx.lineTo(xScale(0),yScale(0)); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, PAD.t, 0, H - PAD.b);
+  grad.addColorStop(0, tc.fillTop);
+  grad.addColorStop(1, tc.fillBot);
+  ctx.fillStyle=grad; ctx.fill();
+}
+
+function renderLegend() {
+  const tc = getThemeColors();
+  const legendRow = document.getElementById('legendRow');
+  legendRow.innerHTML = `<span><div class="dot" style="background:${tc.actualLine}"></div> 2025-26 actual</span>` +
+    `<span><div class="dot" style="background:${tc.histLine}"></div> Historical avg (approx)</span>`;
+}
+
+draw();
+renderLegend();
+
+// Stats
+document.getElementById('totalVal').textContent = cum.toFixed(1) + '"';
+document.getElementById('pctVal').textContent = Math.round(cum / 15.5 * 100) + '%';
+document.getElementById('daysVal').textContent = rainDays;
+
+// Hover
+const tip = document.getElementById('tip');
+canvas.addEventListener('mousemove', e => {
+  const tc = getThemeColors();
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const dayIdx = Math.round((mx - PAD.l) / cw * totalDays);
+  const pt = cumulative.find(p => p.dayIdx === dayIdx) || cumulative.reduce((a,b) => Math.abs(b.dayIdx-dayIdx) < Math.abs(a.dayIdx-dayIdx) ? b : a);
+  if (!pt) { tip.style.display = 'none'; return; }
+  tip.innerHTML = `<span style="color:${tc.tipMuted}">${pt.date}</span><br>` +
+    `<span style="color:${tc.tipAccent}">Cumulative: ${pt.cum.toFixed(2)}"</span><br>` +
+    `<span style="color:${tc.tipDim}">Today: +${pt.daily.toFixed(2)}"</span>`;
+  tip.style.display = 'block';
+  tip.style.left = e.clientX + 14 + 'px';
+  tip.style.top = e.clientY - 14 + 'px';
+
+  // draw crosshair
+  draw();
+  ctx.strokeStyle = tc.crosshair;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(xScale(pt.dayIdx), PAD.t); ctx.lineTo(xScale(pt.dayIdx), H-PAD.b); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.l, yScale(pt.cum)); ctx.lineTo(W-PAD.r, yScale(pt.cum)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(xScale(pt.dayIdx), yScale(pt.cum), 4, 0, Math.PI*2); ctx.fillStyle=tc.dot; ctx.fill();
+});
+canvas.addEventListener('mouseleave', () => { tip.style.display = 'none'; draw(); });
+</script>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<script>
+document.getElementById('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  document.getElementById('themeToggle').textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+  draw();
+  renderLegend();
+});
+if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');document.getElementById('themeToggle').textContent='Dark';draw();renderLegend();}
+</script>
+</body>
+</html>
