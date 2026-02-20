@@ -45,11 +45,11 @@ DATASET = "daily-summaries"
 DATA_TYPES = "PRCP"              # Precipitation (tenths of mm from GHCND)
 UNITS = "standard"               # API returns inches when units=standard
 
-# Stations to try, in order of proximity to Palo Alto.
-# COOP stations (USC*) may stop reporting without notice;
-# airport stations (USW*) are automated and more reliable.
+# Stations to try, in order of preference.
+# Redwood City is closest to Palo Alto with reliable data;
+# the Palo Alto COOP station (USC00046646) has been inactive.
+# Airport stations (USW*) are automated and always reporting.
 STATIONS = [
-    ("USC00046646", "Palo Alto, CA"),
     ("USC00047339", "Redwood City, CA"),
     ("USW00023293", "San Jose Airport, CA"),
     ("USW00023234", "SFO Airport, CA"),

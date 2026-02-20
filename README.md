@@ -1,4 +1,4 @@
-# NOAA Rainfall Tracker for B — Palo Alto
+# NOAA Rainfall Tracker — Palo Alto
 
 Fetches daily precipitation data from the **NOAA NCEI public API** (no API key needed) for the current rain season (Oct 1 – present) and generates a report.
 

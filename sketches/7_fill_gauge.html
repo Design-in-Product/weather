@@ -2,27 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sketch 7 — Season Fill Gauge</title>
 <style>
   :root {
-    --bg: #0a0e17;
-    --bg-card: #0f1923;
-    --bg-deep: #080b12;
-    --text: #c8d6e5;
-    --text-bold: #fff;
-    --muted: #5f7d9a;
-    --dim: #3d566e;
-    --border: #1a2332;
-    --accent: #34c6c6;
-    --accent-light: #6ee7e7;
-    --accent-dark: #0e5a6f;
-    --grid: #1a2332;
-    --tooltip-bg: #1a2332;
-    --tooltip-border: #2d4055;
-    --shadow: rgba(0,0,0,0.5);
-    --mark-line: rgba(255,255,255,0.08);
-  }
-  body.light {
     --bg: #f5f7fa;
     --bg-card: #ffffff;
     --bg-deep: #f0f0f4;
@@ -39,6 +22,24 @@
     --tooltip-border: #e2e8f0;
     --shadow: rgba(0,0,0,0.1);
     --mark-line: rgba(0,0,0,0.08);
+  }
+  body.dark {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --bg-deep: #080b12;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+    --mark-line: rgba(255,255,255,0.08);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; display: flex; flex-direction: column; align-items: center; }
@@ -66,6 +67,19 @@
   .side-stat { text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); }
   .side-stat .num { font-size: 24px; font-weight: bold; color: var(--accent); }
   .side-stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .gauge-wrap { width: 180px; height: 300px; }
+    .gauge-outer { width: 180px; height: 300px; border-radius: 0 0 90px 90px; }
+    .gauge-fill { border-radius: 0 0 88px 88px; }
+    .center-num .big { font-size: 36px; }
+    .center-num .unit { font-size: 12px; }
+    .center-num .pct { font-size: 14px; }
+    .month-markers { gap: 12px; }
+    .side-stats { flex-direction: column; gap: 12px; width: 100%; }
+    .side-stat { width: 100%; }
+    .side-stat .num { font-size: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -169,14 +183,14 @@ document.getElementById('daysLeft').textContent = REMAINING;
 document.getElementById('needed').textContent = needed.toFixed(1) + '"';
 document.getElementById('pace').textContent = (needed / REMAINING).toFixed(3) + '"/d';
 </script>
-<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Dark</button>
 <script>
 (function(){
   const btn = document.getElementById('themeToggle');
-  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  if(new URLSearchParams(location.search).has('dark')){document.body.classList.add('dark');btn.textContent='Light'}
   btn.addEventListener('click', () => {
-    document.body.classList.toggle('light');
-    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+    document.body.classList.toggle('dark');
+    btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
   });
 })();
 </script>

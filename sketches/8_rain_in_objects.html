@@ -2,26 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sketch 8 — Your Rain in Objects</title>
 <style>
   :root {
-    --bg: #0a0e17;
-    --bg-card: #0f1923;
-    --bg-deep: #080b12;
-    --text: #c8d6e5;
-    --text-bold: #fff;
-    --muted: #5f7d9a;
-    --dim: #3d566e;
-    --border: #1a2332;
-    --accent: #34c6c6;
-    --accent-light: #6ee7e7;
-    --accent-dark: #0e5a6f;
-    --grid: #1a2332;
-    --tooltip-bg: #1a2332;
-    --tooltip-border: #2d4055;
-    --shadow: rgba(0,0,0,0.5);
-  }
-  body.light {
     --bg: #f5f7fa;
     --bg-card: #ffffff;
     --bg-deep: #f0f0f4;
@@ -37,6 +21,23 @@
     --tooltip-bg: #ffffff;
     --tooltip-border: #e2e8f0;
     --shadow: rgba(0,0,0,0.1);
+  }
+  body.dark {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --bg-deep: #080b12;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
@@ -59,6 +60,15 @@
   .total-bar .big { font-size: 36px; font-weight: bold; }
   .total-bar .big .num { color: var(--accent); }
   .total-bar .desc { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .cards { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+    .card .icon { font-size: 36px; margin-bottom: 8px; }
+    .card .headline { font-size: 18px; }
+    .total-bar { padding: 14px; }
+    .total-bar .big { font-size: 28px; }
+  }
 </style>
 </head>
 <body>
@@ -187,14 +197,14 @@ function tick() {
 }
 requestAnimationFrame(tick);
 </script>
-<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Dark</button>
 <script>
 (function(){
   const btn = document.getElementById('themeToggle');
-  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  if(new URLSearchParams(location.search).has('dark')){document.body.classList.add('dark');btn.textContent='Light'}
   btn.addEventListener('click', () => {
-    document.body.classList.toggle('light');
-    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+    document.body.classList.toggle('dark');
+    btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
   });
 })();
 </script>

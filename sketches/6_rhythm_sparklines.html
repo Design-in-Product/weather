@@ -2,24 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sketch 6 — Rain Rhythm Sparklines</title>
 <style>
   :root {
-    --bg: #0a0e17;
-    --bg-card: #0f1923;
-    --text: #c8d6e5;
-    --text-bold: #fff;
-    --muted: #5f7d9a;
-    --dim: #3d566e;
-    --border: #1a2332;
-    --accent: #34c6c6;
-    --accent-light: #6ee7e7;
-    --accent-dark: #0e5a6f;
-    --tooltip-bg: #1a2332;
-    --tooltip-border: #2d4055;
-    --shadow: rgba(0,0,0,0.5);
-  }
-  body.light {
     --bg: #f5f7fa;
     --bg-card: #ffffff;
     --text: #2d3748;
@@ -33,6 +19,21 @@
     --tooltip-bg: #ffffff;
     --tooltip-border: #e2e8f0;
     --shadow: rgba(0,0,0,0.1);
+  }
+  body.dark {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
@@ -50,6 +51,14 @@
   .annotation strong { color: var(--accent); }
   .tooltip { position: fixed; background: var(--tooltip-bg); border: 1px solid var(--tooltip-border); padding: 6px 10px;
              border-radius: 4px; font-size: 10px; pointer-events: none; z-index: 10; display: none; }
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .row { gap: 8px; margin-bottom: 12px; }
+    .month-label { width: 44px; font-size: 10px; }
+    .month-total { width: 48px; font-size: 11px; }
+    .month-days { display: none; }
+    .annotation p { font-size: 11px; }
+  }
 </style>
 </head>
 <body>
@@ -76,7 +85,7 @@ const globalMax = Math.max(...Object.values(DATA));
 const container = document.getElementById('rows');
 const tip = document.getElementById('tip');
 
-const isLight = () => document.body.classList.contains('light');
+const isLight = () => !document.body.classList.contains('dark');
 
 // Store references for redraw
 const canvasData = [];
@@ -173,18 +182,18 @@ function renderAll() {
 
 renderAll();
 </script>
-<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Dark</button>
 <script>
 (function(){
   const btn = document.getElementById('themeToggle');
-  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  if(new URLSearchParams(location.search).has('dark')){document.body.classList.add('dark');btn.textContent='Light'}
   btn.addEventListener('click', () => {
-    document.body.classList.toggle('light');
-    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+    document.body.classList.toggle('dark');
+    btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
     renderAll();
   });
-  // Re-render if started in light mode
-  if(document.body.classList.contains('light')) renderAll();
+  // Re-render if started in dark mode
+  if(document.body.classList.contains('dark')) renderAll();
 })();
 </script>
 </body>

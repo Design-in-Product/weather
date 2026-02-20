@@ -2,35 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sketch 3 — Drought & Rain Streaks</title>
 <style>
   :root {
-    --bg: #0a0e17;
-    --bg-card: #0f1923;
-    --text: #c8d6e5;
-    --text-bold: #fff;
-    --muted: #5f7d9a;
-    --dim: #3d566e;
-    --border: #1a2332;
-    --accent: #34c6c6;
-    --accent-light: #6ee7e7;
-    --accent-dark: #0e5a6f;
-    --grid: #1a2332;
-    --tooltip-bg: #1a2332;
-    --tooltip-border: #2d4055;
-    --shadow: rgba(0,0,0,0.5);
-    --dry-grad-1: #1a1a2e;
-    --dry-grad-2: #16213e;
-    --dry-border: #1a2332;
-    --wet-grad-1: #0c3547;
-    --wet-grad-2: #1a8a8a;
-    --wet-border: #34c6c6;
-    --dry-color: #c9a033;
-    --wet-color: #34c6c6;
-    --streak-label: #5f7d9a;
-    --wet-streak-label: #c8d6e5;
-  }
-  body.light {
     --bg: #f5f7fa;
     --bg-card: #ffffff;
     --text: #2d3748;
@@ -56,6 +31,32 @@
     --streak-label: #64748b;
     --wet-streak-label: #1a202c;
   }
+  body.dark {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+    --dry-grad-1: #1a1a2e;
+    --dry-grad-2: #16213e;
+    --dry-border: #1a2332;
+    --wet-grad-1: #0c3547;
+    --wet-grad-2: #1a8a8a;
+    --wet-border: #34c6c6;
+    --dry-color: #c9a033;
+    --wet-color: #34c6c6;
+    --streak-label: #5f7d9a;
+    --wet-streak-label: #c8d6e5;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
   h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
@@ -78,6 +79,13 @@
   .tooltip { position: fixed; background: var(--tooltip-bg); border: 1px solid var(--tooltip-border); padding: 10px 14px;
              border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10; display: none;
              box-shadow: 0 4px 20px var(--shadow); max-width: 240px; }
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .stats { flex-direction: column; gap: 12px; }
+    .stat-block { min-width: auto; }
+    .big-num { font-size: 24px; }
+    .streak { height: 32px; }
+  }
 </style>
 </head>
 <body>
@@ -113,11 +121,12 @@ streaks.push(cur);
 const tl = document.getElementById('timeline');
 const tip = document.getElementById('tip');
 const minW = 3;
+const containerW = tl.clientWidth || 680;
 
 streaks.forEach((s, i) => {
   const el = document.createElement('div');
   el.className = `streak ${s.wet ? 'wet' : 'dry'}`;
-  const w = Math.max(minW, (s.days.length / totalDays) * 680);
+  const w = Math.max(minW, (s.days.length / totalDays) * containerW);
   el.style.width = w + 'px';
   const lbl = document.createElement('span');
   lbl.className = 'streak-label';
@@ -165,7 +174,7 @@ statsEl.innerHTML = `
   </div>
 `;
 </script>
-<button id="themeToggle" onclick="document.body.classList.toggle('light');this.textContent=document.body.classList.contains('light')?'Dark':'Light'" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
-<script>if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');document.getElementById('themeToggle').textContent='Dark'}</script>
+<button id="themeToggle" onclick="document.body.classList.toggle('dark');this.textContent=document.body.classList.contains('dark')?'Light':'Dark'" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Dark</button>
+<script>if(new URLSearchParams(location.search).has('dark')){document.body.classList.add('dark');document.getElementById('themeToggle').textContent='Light'}</script>
 </body>
 </html>

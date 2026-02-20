@@ -1,28 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NOAA Rainfall Sketches</title>
 <style>
   :root {
-    --bg: #0a0e17;
-    --bg-card: #0f1923;
-    --bg-deep: #080b12;
-    --text: #c8d6e5;
-    --text-bold: #fff;
-    --muted: #5f7d9a;
-    --dim: #3d566e;
-    --border: #1a2332;
-    --accent: #34c6c6;
-    --accent-light: #6ee7e7;
-    --accent-dark: #0e5a6f;
-    --grid: #1a2332;
-    --tooltip-bg: #1a2332;
-    --tooltip-border: #2d4055;
-    --shadow: rgba(0,0,0,0.5);
-  }
-  body.light {
     --bg: #f5f7fa;
     --bg-card: #ffffff;
     --bg-deep: #f0f0f4;
@@ -39,6 +22,23 @@
     --tooltip-border: #e2e8f0;
     --shadow: rgba(0,0,0,0.1);
   }
+  body.dark {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --bg-deep: #080b12;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --accent-light: #6ee7e7;
+    --accent-dark: #0e5a6f;
+    --grid: #1a2332;
+    --tooltip-bg: #1a2332;
+    --tooltip-border: #2d4055;
+    --shadow: rgba(0,0,0,0.5);
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
   h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
@@ -54,8 +54,16 @@
   .card .links a { font-size: 11px; color: var(--accent); text-decoration: none; padding: 4px 10px;
                    border: 1px solid var(--border); border-radius: 4px; transition: border-color 0.2s, background 0.2s; }
   .card .links a:hover { border-color: var(--accent); background: var(--bg-deep); }
-  .card .links a.light-link { color: var(--dim); }
-  .card .links a.light-link:hover { color: var(--accent); }
+  .card .links a.dark-link { color: var(--dim); }
+  .card .links a.dark-link:hover { color: var(--accent); }
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .grid { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+    .card .number { font-size: 24px; }
+    .card .title { font-size: 14px; }
+    .card .links { flex-wrap: wrap; }
+  }
 </style>
 </head>
 <body>
@@ -75,21 +83,21 @@ const SKETCHES = [
 ];
 
 const grid = document.getElementById('grid');
-const isLight = () => document.body.classList.contains('light');
+const isDark = () => document.body.classList.contains('dark');
 
 function renderCards() {
   grid.innerHTML = '';
   SKETCHES.forEach(s => {
     const card = document.createElement('div');
     card.className = 'card';
-    const lightParam = isLight() ? '?light' : '';
+    const darkParam = isDark() ? '?dark' : '';
     card.innerHTML = `
       <div class="number">${String(s.num).padStart(2, '0')}</div>
       <div class="title">${s.title}</div>
       <div class="desc">${s.desc}</div>
       <div class="links">
-        <a href="${s.file}${lightParam}" class="sketch-link">Open sketch</a>
-        <a href="${s.file}?light" class="light-link">Open in light mode</a>
+        <a href="${s.file}${darkParam}" class="sketch-link">Open sketch</a>
+        <a href="${s.file}?dark" class="dark-link">Open in dark mode</a>
       </div>
     `;
     grid.appendChild(card);
@@ -101,21 +109,21 @@ renderCards();
 // Keep links in sync when theme toggles
 const observer = new MutationObserver(() => {
   const links = document.querySelectorAll('.sketch-link');
-  const lightSuffix = isLight() ? '?light' : '';
+  const darkSuffix = isDark() ? '?dark' : '';
   links.forEach((a, i) => {
-    a.href = SKETCHES[i].file + lightSuffix;
+    a.href = SKETCHES[i].file + darkSuffix;
   });
 });
 observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 </script>
-<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Dark</button>
 <script>
 (function(){
   const btn = document.getElementById('themeToggle');
-  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  if(new URLSearchParams(location.search).has('dark')){document.body.classList.add('dark');btn.textContent='Light'}
   btn.addEventListener('click', () => {
-    document.body.classList.toggle('light');
-    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+    document.body.classList.toggle('dark');
+    btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
   });
 })();
 </script>

@@ -2,20 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sketch 5 — Does It Rain More on Weekends?</title>
 <style>
   :root {
-    --bg: #0a0e17;
-    --bg-card: #0f1923;
-    --text: #c8d6e5;
-    --text-bold: #fff;
-    --muted: #5f7d9a;
-    --dim: #3d566e;
-    --border: #1a2332;
-    --accent: #34c6c6;
-    --shadow: rgba(0,0,0,0.5);
-  }
-  body.light {
     --bg: #f5f7fa;
     --bg-card: #ffffff;
     --text: #2d3748;
@@ -25,6 +15,17 @@
     --border: #e2e8f0;
     --accent: #0891b2;
     --shadow: rgba(0,0,0,0.1);
+  }
+  body.dark {
+    --bg: #0a0e17;
+    --bg-card: #0f1923;
+    --text: #c8d6e5;
+    --text-bold: #fff;
+    --muted: #5f7d9a;
+    --dim: #3d566e;
+    --border: #1a2332;
+    --accent: #34c6c6;
+    --shadow: rgba(0,0,0,0.5);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'SF Mono', 'Menlo', monospace; background: var(--bg); color: var(--text); padding: 32px; }
@@ -44,6 +45,16 @@
   .verdict p { font-size: 12px; color: var(--muted); }
   .split-bars { display: flex; gap: 4px; align-items: flex-end; }
   .mini-bar { width: 16px; border-radius: 2px 2px 0 0; }
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .chart { gap: 6px; height: 200px; padding: 0 8px; }
+    .bar { width: 28px; }
+    .bar-val { font-size: 9px; top: -16px; }
+    .day-label { font-size: 9px; }
+    .sub-label { font-size: 8px; }
+    .verdict { padding: 14px; }
+    .verdict h2 { font-size: 14px; }
+  }
 </style>
 </head>
 <body>
@@ -69,7 +80,7 @@ Object.keys(DATA).forEach(d => {
 const dayAvg = dayTotals.map((t,i) => dayCounts[i] ? t / dayCounts[i] : 0);
 const maxAvg = Math.max(...dayAvg);
 
-const isLight = () => document.body.classList.contains('light');
+const isLight = () => !document.body.classList.contains('dark');
 
 function renderChart() {
   const chart = document.getElementById('chart');
@@ -124,18 +135,18 @@ function renderAll() {
 
 renderAll();
 </script>
-<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Light</button>
+<button id="themeToggle" style="position:fixed;top:12px;right:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;font:10px/1 monospace;cursor:pointer;z-index:100">Dark</button>
 <script>
 (function(){
   const btn = document.getElementById('themeToggle');
-  if(new URLSearchParams(location.search).has('light')){document.body.classList.add('light');btn.textContent='Dark'}
+  if(new URLSearchParams(location.search).has('dark')){document.body.classList.add('dark');btn.textContent='Light'}
   btn.addEventListener('click', () => {
-    document.body.classList.toggle('light');
-    btn.textContent = document.body.classList.contains('light') ? 'Dark' : 'Light';
+    document.body.classList.toggle('dark');
+    btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
     renderAll();
   });
-  // Re-render if started in light mode
-  if(document.body.classList.contains('light')) renderAll();
+  // Re-render if started in dark mode
+  if(document.body.classList.contains('dark')) renderAll();
 })();
 </script>
 </body>
