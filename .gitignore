@@ -1,0 +1,10 @@
+# Generated site artifacts — built by build_site.py and committed by the
+# GitHub Action, not from local runs.
+site/
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

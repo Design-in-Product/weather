@@ -1,0 +1,72 @@
+name: Update rainfall site
+
+# Daily build of the rainfall dashboard. Fetches NOAA data, builds the static
+# site under ./site/, deploys to GitHub Pages, and emails Xian if any newly
+# observed records contain rain (set-diff against the previously deployed
+# state.json fetched from the live site).
+#
+# NOAA's GHCN-Daily feed lags several days, so once-a-day is plenty.
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # 14:00 UTC daily ≈ 7am Pacific (6am PST / 7am PDT)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, but let in-progress runs finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch previous state from live Pages site
+        # First run will 404; that's expected and detect_and_notify.py will
+        # treat empty prev state as "first run" and skip the email.
+        run: |
+          mkdir -p prev
+          PUBLIC_URL="https://design-in-product.github.io/weather"
+          if curl -fsS -o prev/state.json "${PUBLIC_URL}/state.json"; then
+            echo "Loaded previous state."
+          else
+            echo "No previous state at ${PUBLIC_URL}/state.json — first run."
+            echo '{}' > prev/state.json
+          fi
+
+      - name: Build site
+        run: python3 build_site.py
+
+      - name: Detect fresh rain and notify
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          REPORT_TO: ${{ secrets.REPORT_TO }}
+          PUBLIC_URL: https://design-in-product.github.io/weather/
+        run: python3 detect_and_notify.py prev/state.json site/state.json
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

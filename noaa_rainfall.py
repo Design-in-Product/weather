@@ -207,6 +207,343 @@ def output_csv(records: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# HTML rendering (mobile-first, self-contained — used by build_site.py)
+# ---------------------------------------------------------------------------
+
+_HTML_CSS = """
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: #f4f7fa;
+  color: #1a2733;
+  line-height: 1.4;
+  padding: 16px 16px 48px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+header { margin-bottom: 16px; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #6a7785; }
+.selector {
+  display: flex;
+  gap: 4px;
+  background: #e3e9f0;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.src-btn {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  color: #4a5663;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.src-btn.active {
+  background: white;
+  color: #1a2733;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.hero { text-align: center; padding: 28px 20px; }
+.hero .number {
+  font-size: 64px;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.hero .unit { font-size: 24px; font-weight: 500; color: #6a7785; }
+.hero .label { font-size: 11px; color: #6a7785; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
+.hero .meta { font-size: 13px; color: #4a5663; margin-top: 12px; }
+.hero .note { font-size: 11px; color: #8a96a3; margin-top: 8px; font-style: italic; }
+.section-title {
+  font-size: 11px; font-weight: 600; color: #6a7785;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 12px;
+}
+.recent { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.recent .date { font-size: 14px; color: #4a5663; }
+.recent .amount { font-size: 28px; font-weight: 600; color: #2563eb; white-space: nowrap; }
+.recent .amount .unit { font-size: 14px; color: #6a7785; font-weight: 400; }
+.monthly-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
+.monthly-bars .bar {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+.monthly-bars .bar .month-val {
+  font-size: 10px; color: #1a2733; font-weight: 600;
+  margin-bottom: 2px;
+}
+.monthly-bars .bar .fill-wrap {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.monthly-bars .bar .fill {
+  width: 100%;
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  border-radius: 4px 4px 0 0;
+  min-height: 1px;
+}
+.monthly-bars .bar .month-label {
+  font-size: 10px; color: #6a7785;
+  margin-top: 4px;
+}
+.daily-strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 60px;
+}
+.daily-strip .day {
+  flex: 1 1 0;
+  background: #e3e9f0;
+  border-radius: 1px;
+  min-height: 2px;
+}
+.daily-strip .day.rain { background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); }
+.daily-strip-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: #6a7785; margin-top: 6px;
+}
+.source-section { display: none; }
+.source-section.active { display: block; }
+footer {
+  margin-top: 24px;
+  font-size: 11px;
+  color: #8a96a3;
+  text-align: center;
+  line-height: 1.6;
+}
+footer a { color: #4a5663; text-decoration: none; border-bottom: 1px solid #c8d2dc; }
+footer a:hover { color: #2563eb; border-bottom-color: #2563eb; }
+"""
+
+_HTML_JS = """
+document.querySelectorAll('.src-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.source;
+    document.querySelectorAll('.src-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.source === key);
+    });
+    document.querySelectorAll('.source-section').forEach(s => {
+      s.classList.toggle('active', s.dataset.source === key);
+    });
+  });
+});
+"""
+
+
+def _compute_summary(records: list[dict], today: date) -> dict:
+    """Compute season summary stats from a list of daily records."""
+    total = sum(r["precipitation_in"] for r in records)
+    rainy_days = sum(1 for r in records if r["precipitation_in"] > 0)
+    monthly: dict[str, float] = {}
+    for r in records:
+        key = r["date"][:7]  # YYYY-MM
+        monthly[key] = monthly.get(key, 0) + r["precipitation_in"]
+    last_rain: Optional[dict] = None
+    for r in reversed(records):
+        if r["precipitation_in"] > 0:
+            last_rain = r
+            break
+    days_since_rain: Optional[int] = None
+    if last_rain:
+        last_dt = datetime.strptime(last_rain["date"], "%Y-%m-%d").date()
+        days_since_rain = (today - last_dt).days
+    return {
+        "total": total,
+        "rainy_days": rainy_days,
+        "monthly": monthly,
+        "last_rain": last_rain,
+        "days_since_rain": days_since_rain,
+    }
+
+
+def _iter_season_months(season_start: date, today: date) -> list[str]:
+    """Return YYYY-MM strings for every month in the season range."""
+    months: list[str] = []
+    cur = season_start.replace(day=1)
+    while cur <= today:
+        months.append(cur.strftime("%Y-%m"))
+        if cur.month == 12:
+            cur = cur.replace(year=cur.year + 1, month=1)
+        else:
+            cur = cur.replace(month=cur.month + 1)
+    return months
+
+
+def _render_source_section(source: dict, season_start: date, today: date,
+                            is_default: bool) -> str:
+    """Render one <section> for a single source/station."""
+    summary = _compute_summary(source["records"], today)
+    active_cls = " active" if is_default else ""
+    total = summary["total"]
+    rainy = summary["rainy_days"]
+    rainy_lbl = "day" if rainy == 1 else "days"
+    note = source.get("note", "")
+    note_html = f'<div class="note">{note}</div>' if note else ""
+
+    # Recent rain card
+    last_rain = summary["last_rain"]
+    if last_rain:
+        last_dt = datetime.strptime(last_rain["date"], "%Y-%m-%d")
+        days_since = summary["days_since_rain"]
+        if days_since == 0:
+            ago_lbl = "today"
+        elif days_since == 1:
+            ago_lbl = "yesterday"
+        else:
+            ago_lbl = f"{days_since} days ago"
+        recent_html = (
+            '<div class="section-title">Most recent rain</div>'
+            '<div class="recent">'
+            f'<div class="date">{last_dt.strftime("%a %b %-d")} · {ago_lbl}</div>'
+            f'<div class="amount">{last_rain["precipitation_in"]:.2f}<span class="unit"> in</span></div>'
+            '</div>'
+        )
+    else:
+        recent_html = (
+            '<div class="section-title">Most recent rain</div>'
+            '<div class="recent"><div class="date">No rain recorded this season</div></div>'
+        )
+
+    # Monthly bars
+    monthly = summary["monthly"]
+    months = _iter_season_months(season_start, today)
+    max_month = max((monthly.get(m, 0) for m in months), default=0) or 1
+    bars_html = ""
+    for m in months:
+        v = monthly.get(m, 0)
+        height_pct = (v / max_month * 100) if max_month > 0 else 0
+        label = datetime.strptime(m, "%Y-%m").strftime("%b")
+        bars_html += (
+            '<div class="bar">'
+            f'<div class="month-val">{v:.1f}</div>'
+            '<div class="fill-wrap">'
+            f'<div class="fill" style="height: {height_pct:.0f}%"></div>'
+            '</div>'
+            f'<div class="month-label">{label}</div>'
+            '</div>'
+        )
+
+    # Daily strip — last 14 days
+    recent_records = source["records"][-14:]
+    max_day = max((r["precipitation_in"] for r in recent_records), default=0)
+    strip_html = ""
+    for r in recent_records:
+        v = r["precipitation_in"]
+        if v > 0 and max_day > 0:
+            h_pct = max(10, v / max_day * 100)
+            cls = " rain"
+        else:
+            h_pct = 8
+            cls = ""
+        strip_html += f'<div class="day{cls}" style="height: {h_pct:.0f}%"></div>'
+    if recent_records:
+        first = datetime.strptime(recent_records[0]["date"], "%Y-%m-%d").strftime("%b %-d")
+        last = datetime.strptime(recent_records[-1]["date"], "%Y-%m-%d").strftime("%b %-d")
+        strip_labels = f'<div class="daily-strip-labels"><span>{first}</span><span>{last}</span></div>'
+    else:
+        strip_labels = ""
+
+    return (
+        f'<section class="source-section{active_cls}" data-source="{source["key"]}">'
+        '<div class="card hero">'
+        f'<div><span class="number">{total:.2f}</span><span class="unit"> in</span></div>'
+        '<div class="label">Season total</div>'
+        f'<div class="meta">{rainy} {rainy_lbl} with rain · since {season_start.strftime("%b %-d, %Y")}</div>'
+        f'{note_html}'
+        '</div>'
+        f'<div class="card">{recent_html}</div>'
+        '<div class="card">'
+        '<div class="section-title">Monthly totals (in)</div>'
+        f'<div class="monthly-bars">{bars_html}</div>'
+        '</div>'
+        '<div class="card">'
+        '<div class="section-title">Last 14 days</div>'
+        f'<div class="daily-strip">{strip_html}</div>'
+        f'{strip_labels}'
+        '</div>'
+        '</section>'
+    )
+
+
+def render_html(sources: list[dict], season_start: date, season_end: date,
+                generated_at: datetime,
+                default_source_key: str = "palo_alto_estimate") -> str:
+    """Render a self-contained mobile-first HTML page.
+
+    Each entry in `sources` should be a dict with keys:
+        key      – stable identifier used for selector buttons
+        name     – short friendly label shown in the selector
+        records  – list of {date, precipitation_in} dicts
+        note     – optional caption (e.g., station ID or formula)
+    """
+    if not any(s["key"] == default_source_key for s in sources):
+        default_source_key = sources[0]["key"]
+
+    selector_html = ""
+    for s in sources:
+        active = " active" if s["key"] == default_source_key else ""
+        selector_html += (
+            f'<button class="src-btn{active}" data-source="{s["key"]}">{s["name"]}</button>'
+        )
+
+    sections_html = "".join(
+        _render_source_section(s, season_start, season_end,
+                                is_default=(s["key"] == default_source_key))
+        for s in sources
+    )
+
+    generated_str = generated_at.strftime("%b %-d, %Y at %-I:%M %p")
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Palo Alto Rainfall</title>
+<style>{_HTML_CSS}</style>
+</head>
+<body>
+<header>
+  <h1>Palo Alto Rainfall</h1>
+  <div class="subtitle">Rain season {season_start.strftime("%b %Y")} – {season_end.strftime("%b %Y")}</div>
+</header>
+<div class="selector">{selector_html}</div>
+{sections_html}
+<footer>
+  Data: NOAA NCEI GHCN-Daily · Updated {generated_str}<br>
+  Stations: USC00047339 (Redwood City) · USW00023293 (San Jose Apt) · USW00023234 (SFO)<br>
+  <a href="./sketches/">Eight ways to look at rain →</a>
+</footer>
+<script>{_HTML_JS}</script>
+</body>
+</html>
+"""
+
+
+# ---------------------------------------------------------------------------
 # macOS Keychain helpers
 # ---------------------------------------------------------------------------
 
