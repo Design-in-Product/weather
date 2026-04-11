@@ -42,7 +42,7 @@ jobs:
         # treat empty prev state as "first run" and skip the email.
         run: |
           mkdir -p prev
-          PUBLIC_URL="https://design-in-product.github.io/weather"
+          PUBLIC_URL="https://weather.dinp.xyz"
           if curl -fsS -o prev/state.json "${PUBLIC_URL}/state.json"; then
             echo "Loaded previous state."
           else
@@ -59,7 +59,7 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
           REPORT_TO: ${{ secrets.REPORT_TO }}
-          PUBLIC_URL: https://design-in-product.github.io/weather/
+          PUBLIC_URL: https://weather.dinp.xyz/
         run: python3 detect_and_notify.py prev/state.json site/state.json
 
       - name: Upload Pages artifact

@@ -136,6 +136,13 @@ def main() -> None:
             shutil.rmtree(dest)
         shutil.copytree(SKETCHES_DIR, dest)
 
+    # Preserve the custom-domain CNAME in the deployed artifact. Only `site/`
+    # is uploaded to Pages, so CNAME at the repo root must be copied in or
+    # the custom domain binding drops on the next deploy.
+    cname_src = REPO_DIR / "CNAME"
+    if cname_src.is_file():
+        shutil.copy2(cname_src, SITE_DIR / "CNAME")
+
     data_payload = {
         "metadata": {
             "generated_at": generated_at.isoformat(timespec="seconds"),

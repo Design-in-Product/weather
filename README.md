@@ -70,7 +70,7 @@ python3 build_site.py
 python3 -m http.server 8765 --bind 0.0.0.0 --directory site   # preview locally
 ```
 
-The deployed copy lives at **https://design-in-product.github.io/weather/** and is rebuilt daily by a GitHub Action (`.github/workflows/update.yml`). When the daily run sees newly observed records with rain (set-diffed against the previously deployed `state.json`), it emails the report to the configured recipient.
+The deployed copy lives at **https://weather.dinp.xyz/** and is rebuilt daily by a GitHub Action (`.github/workflows/update.yml`). When the daily run sees newly observed records with rain (set-diffed against the previously deployed `state.json`), it emails the report to the configured recipient.
 
 ### One-time deploy setup
 
