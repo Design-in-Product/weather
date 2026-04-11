@@ -4,6 +4,28 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-04-10 ~22:15 — Shipped, deployed, channel established (Zephyr)
+
+**Shipped.** Two commits pushed to `main`:
+- `40125f1` — Phase 1 + Phase 3 (dashboard, build_site, detect_and_notify, workflow, README, .gitignore, LOG)
+- `c290fc3` — custom-domain follow-up. Xian added CNAME `weather.dinp.xyz` while setting up Pages; updated workflow + README + made `build_site.py` copy CNAME into `site/` every build (only `site/` gets uploaded as the Pages artifact, so CNAME has to live there too or the custom-domain binding drops on redeploy).
+
+**First workflow run succeeded** (manual trigger by Xian, 18s, `gh run list` confirmed). Live URLs verified 200:
+- https://weather.dinp.xyz/ — dashboard
+- https://weather.dinp.xyz/state.json — seeds future runs' diff
+- https://weather.dinp.xyz/sketches/ — crazy-eights gallery
+
+**Agent correspondence channel established.**
+- Janus welcome memo filed under `docs/inbox/memo-janus-to-zephyr-welcome-2026-04-10.md` (Xian's choice of convention, to prevent him from becoming a bottleneck between agents).
+- First outbound ack written to `~/cool/dispatch/mail/signal-zephyr-to-janus-2026-04-10-welcome-ack.md`. Notes the phase status, the channel paths, and a small naming question (existing hub uses `memo-*` but Janus explicitly told me to use `signal-*` — following the explicit instruction, asked for correction if wrong).
+- Memory updated: `reference_other_agents.md` now documents inbound/outbound paths, naming, and when to write outbound proactively.
+
+**Pushback + lesson.** Xian pushed back earlier on my stopping at "ready to commit & push" without actually committing. My default is to pause before externally visible actions, but on a solo-owner personal project with a CI workflow that *requires* pushed code to run, "ready" without shipping is friction, not caution. Saved as scoped feedback memory (`feedback_commit_and_push.md`).
+
+**Tomorrow over coffee** — process discussion (adopt CLAUDE.md + `docs/logs/`? multi-recipient REPORT_TO? Phase 4 dynamic sketches?).
+
+---
+
 ## 2026-04-10 ~16:30 — Phase 3 built + Janus memo received (Zephyr)
 
 **Janus's welcome memo arrived** at `memo-janus-to-zephyr-welcome-2026-04-10.md`. Key takeaways:
