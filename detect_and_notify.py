@@ -130,13 +130,15 @@ def main() -> int:
     try:
         send_email(report, to_addr)
     except SystemExit as exc:
-        # send_email calls sys.exit(1) on missing creds — we already pre-check,
-        # but be defensive.
-        print(f"send_email exited: {exc}", file=sys.stderr)
-        return 1
+        # send_email calls sys.exit(1) on bad creds — don't let a notification
+        # failure block the site deploy.
+        print(f"WARNING: send_email exited: {exc}", file=sys.stderr)
+        print("Site deploy will continue without the email.", file=sys.stderr)
+        return 0
     except Exception as exc:
-        print(f"Failed to send email: {exc}", file=sys.stderr)
-        return 1
+        print(f"WARNING: Failed to send email: {exc}", file=sys.stderr)
+        print("Site deploy will continue without the email.", file=sys.stderr)
+        return 0
     return 0
 
 
