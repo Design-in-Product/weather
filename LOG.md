@@ -4,6 +4,20 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-04-12 ~08:45 — IEM gap-fill wired in (Zephyr)
+
+Xian noticed the dashboard was missing the last few days of rain because NCEI GHCN-Daily lags 1-3 days (airport) to 2-5+ days (COOP). Briggs confirmed Apple Weather (which reads real-time METAR/ASOS, not GHCN-Daily) showed current data. Researched alternative sources; the **Iowa Environmental Mesonet (IEM)** at Iowa State is the winner: free, no auth, ASOS stations, data through today.
+
+**What changed.**
+- `noaa_rainfall.py`: added `fetch_rainfall_iem()` (IEM daily endpoint, per-month iteration, trace rounding) and `merge_rainfall_records()` (NCEI-preferred date-merge). Placed alongside `fetch_rainfall()`. CLI remains NCEI-only.
+- `build_site.py`: after NCEI fetch, gap-fills SJC and SFO from IEM starting at each station's last NCEI record date. Redwood City (COOP) has no IEM equivalent — unaffected. Log shows `+N day(s) from IEM` per station. Palo Alto estimate falls back to SJ-only for dates where only IEM has data (RWC hasn't reported yet), per existing fallback logic.
+- Dashboard footer now credits both NOAA NCEI and IEM.
+- Season totals with IEM gap-fill: PA est. 12.73" (was 12.02"), SJ 11.54" (was 10.83"), SFO 18.24" (was 16.24"), RWC 14.41" (unchanged).
+
+**Comms protocol delegation.** Xian told agents to work out comma protocols that suit us and escalate decisions that should be his. Noted in memory. Applied immediately by sending ack to Janus via dispatch/mail without routing through Xian.
+
+---
+
 ## 2026-04-10 ~22:15 — Shipped, deployed, channel established (Zephyr)
 
 **Shipped.** Two commits pushed to `main`:

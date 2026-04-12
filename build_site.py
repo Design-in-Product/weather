@@ -20,6 +20,8 @@ from pathlib import Path
 from noaa_rainfall import (
     _rain_season_start,
     fetch_rainfall,
+    fetch_rainfall_iem,
+    merge_rainfall_records,
     render_html,
 )
 
@@ -56,6 +58,14 @@ REPO_DIR = Path(__file__).parent
 SITE_DIR = REPO_DIR / "site"
 SKETCHES_DIR = REPO_DIR / "sketches"
 
+# IEM station mapping for gap-filling NCEI with near-real-time ASOS data.
+# Only airport (ASOS/AWOS) stations have IEM equivalents.
+IEM_MAPPING = {
+    "san_jose": {"icao": "SJC", "network": "CA_ASOS"},
+    "sfo": {"icao": "SFO", "network": "CA_ASOS"},
+    # Redwood City (USC00047339) is a COOP station — no IEM equivalent.
+}
+
 
 def compute_palo_alto_estimate(sj_records: list[dict],
                                 rwc_records: list[dict]) -> list[dict]:
@@ -85,14 +95,34 @@ def main() -> None:
     today = date.today()
     season_start = _rain_season_start(today)
 
-    # Fetch each real station once.
+    # Fetch each real station from NCEI (archival, may lag a few days).
     fetched: dict[str, list[dict]] = {}
     for src in SOURCES_CONFIG:
         sid = src["station_id"]
         if sid is None:
             continue
-        print(f"Fetching {src['name']} ({sid})...", file=sys.stderr)
+        print(f"Fetching {src['name']} from NCEI ({sid})...", file=sys.stderr)
         fetched[src["key"]] = fetch_rainfall(season_start, today, station_id=sid)
+
+    # Gap-fill airport stations with IEM (near-real-time, same-day freshness).
+    # Only fetch the months where NCEI has gaps — typically the last 1-2 months.
+    for key, iem_info in IEM_MAPPING.items():
+        ncei_records = fetched.get(key, [])
+        if ncei_records:
+            ncei_max = max(r["date"] for r in ncei_records)
+            iem_start = datetime.strptime(ncei_max, "%Y-%m-%d").date()
+        else:
+            iem_start = season_start
+        print(f"Gap-filling {key} from IEM ({iem_info['icao']}, "
+              f"{iem_start} → {today})...", file=sys.stderr)
+        iem_records = fetch_rainfall_iem(
+            iem_info["icao"], iem_info["network"], iem_start, today,
+        )
+        before = len(ncei_records)
+        fetched[key] = merge_rainfall_records(ncei_records, iem_records)
+        added = len(fetched[key]) - before
+        if added:
+            print(f"  +{added} day(s) from IEM", file=sys.stderr)
 
     # Build the PA estimate from SJ + RWC.
     pa_estimate = compute_palo_alto_estimate(

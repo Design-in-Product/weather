@@ -139,6 +139,93 @@ def fetch_rainfall(start: date, end: date, station_id: str = DEFAULT_STATION_ID,
     return all_records
 
 
+# ---------------------------------------------------------------------------
+# IEM (Iowa Environmental Mesonet) — near-real-time ASOS observations
+# ---------------------------------------------------------------------------
+
+IEM_API_BASE = "https://mesonet.agron.iastate.edu/api/1/daily.json"
+
+
+def fetch_rainfall_iem(station_icao: str, network: str,
+                       start: date, end: date,
+                       debug: bool = False) -> list[dict]:
+    """Fetch daily precipitation from the Iowa Environmental Mesonet.
+
+    IEM serves ASOS/AWOS station data with near-zero lag (often same-day),
+    filling the gap left by NCEI's multi-day processing pipeline.  The API
+    is per-month, so we iterate months in the date range.
+
+    Returns the same [{date, precipitation_in}, ...] format as fetch_rainfall.
+    """
+    all_records: list[dict] = []
+    cur = start.replace(day=1)
+
+    while cur <= end:
+        params = {
+            "station": station_icao,
+            "network": network,
+            "year": str(cur.year),
+            "month": str(cur.month),
+        }
+        url = f"{IEM_API_BASE}?{urlencode(params)}"
+        req = Request(url, headers={"Accept": "application/json"})
+
+        if debug:
+            print(f"DEBUG IEM URL: {url}", file=sys.stderr)
+
+        try:
+            with urlopen(req, timeout=30) as resp:
+                body = resp.read().decode()
+        except (HTTPError, URLError) as exc:
+            # Non-fatal: IEM is a supplementary source.
+            if debug:
+                print(f"DEBUG IEM error for {station_icao} "
+                      f"{cur.year}-{cur.month:02d}: {exc}", file=sys.stderr)
+            if cur.month == 12:
+                cur = cur.replace(year=cur.year + 1, month=1)
+            else:
+                cur = cur.replace(month=cur.month + 1)
+            continue
+
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            data = {}
+
+        for rec in data.get("data", []):
+            rec_date = rec.get("date", "")[:10]
+            precip = rec.get("precip")
+            if rec_date and precip is not None:
+                # IEM reports trace precipitation as 0.0001; round to
+                # hundredths to match NCEI's reporting convention.
+                precip_val = round(float(precip), 2)
+                if start.isoformat() <= rec_date <= end.isoformat():
+                    all_records.append({
+                        "date": rec_date,
+                        "precipitation_in": precip_val,
+                    })
+
+        if cur.month == 12:
+            cur = cur.replace(year=cur.year + 1, month=1)
+        else:
+            cur = cur.replace(month=cur.month + 1)
+
+    all_records.sort(key=lambda r: r["date"])
+    return all_records
+
+
+def merge_rainfall_records(primary: list[dict],
+                           supplement: list[dict]) -> list[dict]:
+    """Merge two record lists, preferring *primary* (NCEI) for any shared date."""
+    primary_dates = {r["date"] for r in primary}
+    merged = list(primary)
+    for r in supplement:
+        if r["date"] not in primary_dates:
+            merged.append(r)
+    merged.sort(key=lambda r: r["date"])
+    return merged
+
+
 def format_report(records: list[dict], season_start: date, today: date,
                   station_id: str = DEFAULT_STATION_ID,
                   station_name: str = DEFAULT_STATION_NAME) -> str:
@@ -533,8 +620,8 @@ def render_html(sources: list[dict], season_start: date, season_end: date,
 <div class="selector">{selector_html}</div>
 {sections_html}
 <footer>
-  Data: NOAA NCEI GHCN-Daily · Updated {generated_str}<br>
-  Stations: USC00047339 (Redwood City) · USW00023293 (San Jose Apt) · USW00023234 (SFO)<br>
+  Data: NOAA NCEI + <a href="https://mesonet.agron.iastate.edu/">Iowa Environmental Mesonet</a> · Updated {generated_str}<br>
+  Stations: USC00047339 (Redwood City) · USW00023293 / SJC (San Jose) · USW00023234 / SFO<br>
   <a href="./sketches/">Eight ways to look at rain →</a>
 </footer>
 <script>{_HTML_JS}</script>
