@@ -21,7 +21,10 @@ from noaa_rainfall import (
     _rain_season_start,
     fetch_rainfall,
     fetch_rainfall_iem,
+    fetch_temperature,
+    fetch_temperature_iem,
     merge_rainfall_records,
+    merge_temperature_records,
     render_html,
 )
 
@@ -91,6 +94,35 @@ def compute_palo_alto_estimate(sj_records: list[dict],
     return estimate
 
 
+def compute_palo_alto_temp_estimate(sj_records: list[dict],
+                                     rwc_records: list[dict]) -> list[dict]:
+    """Combine San Jose and Redwood City temperature records into the PA estimate.
+
+    Same (2*SJ + RWC)/3 weighting as the rainfall estimate, applied
+    independently to tmax_f and tmin_f. Falls back to whichever single
+    station has a reading for a given field/date.
+    """
+    sj_map = {r["date"]: r for r in sj_records}
+    rwc_map = {r["date"]: r for r in rwc_records}
+    all_dates = sorted(set(sj_map) | set(rwc_map))
+    estimate: list[dict] = []
+    for d in all_dates:
+        sj = sj_map.get(d, {})
+        rwc = rwc_map.get(d, {})
+        row: dict = {"date": d}
+        for field in ("tmax_f", "tmin_f"):
+            sj_v = sj.get(field)
+            rwc_v = rwc.get(field)
+            if sj_v is not None and rwc_v is not None:
+                row[field] = round((2 * sj_v + rwc_v) / 3, 1)
+            elif sj_v is not None:
+                row[field] = sj_v
+            else:
+                row[field] = rwc_v
+        estimate.append(row)
+    return estimate
+
+
 def main() -> None:
     today = date.today()
     season_start = _rain_season_start(today)
@@ -145,6 +177,52 @@ def main() -> None:
             "records": records_by_key.get(src["key"], []),
         })
 
+    # Temperature: same fetch → IEM gap-fill → PA-estimate pipeline as rain.
+    fetched_temp: dict[str, list[dict]] = {}
+    for src in SOURCES_CONFIG:
+        sid = src["station_id"]
+        if sid is None:
+            continue
+        print(f"Fetching {src['name']} temperature from NCEI ({sid})...", file=sys.stderr)
+        fetched_temp[src["key"]] = fetch_temperature(season_start, today, station_id=sid)
+
+    for key, iem_info in IEM_MAPPING.items():
+        ncei_records = fetched_temp.get(key, [])
+        if ncei_records:
+            ncei_max = max(r["date"] for r in ncei_records)
+            iem_start = datetime.strptime(ncei_max, "%Y-%m-%d").date()
+        else:
+            iem_start = season_start
+        print(f"Gap-filling {key} temperature from IEM ({iem_info['icao']}, "
+              f"{iem_start} → {today})...", file=sys.stderr)
+        iem_temp_records = fetch_temperature_iem(
+            iem_info["icao"], iem_info["network"], iem_start, today,
+        )
+        before = len(ncei_records)
+        fetched_temp[key] = merge_temperature_records(ncei_records, iem_temp_records)
+        added = len(fetched_temp[key]) - before
+        if added:
+            print(f"  +{added} day(s) from IEM", file=sys.stderr)
+
+    pa_temp_estimate = compute_palo_alto_temp_estimate(
+        fetched_temp.get("san_jose", []),
+        fetched_temp.get("redwood_city", []),
+    )
+
+    temp_records_by_key: dict[str, list[dict]] = {
+        "palo_alto_estimate": pa_temp_estimate,
+        **fetched_temp,
+    }
+
+    temp_sources = []
+    for src in SOURCES_CONFIG:
+        temp_sources.append({
+            "key": src["key"],
+            "name": src["name"],
+            "note": src["note"],
+            "records": temp_records_by_key.get(src["key"], []),
+        })
+
     generated_at = datetime.now()
 
     html = render_html(
@@ -153,6 +231,7 @@ def main() -> None:
         season_end=today,
         generated_at=generated_at,
         default_source_key="palo_alto_estimate",
+        temp_sources=temp_sources,
     )
 
     SITE_DIR.mkdir(exist_ok=True)
@@ -189,6 +268,7 @@ def main() -> None:
             ],
         },
         "records": records_by_key,
+        "temperature_records": temp_records_by_key,
     }
     (SITE_DIR / "data.json").write_text(
         json.dumps(data_payload, indent=2), encoding="utf-8"
@@ -209,8 +289,14 @@ def main() -> None:
 
     totals = {k: round(sum(r["precipitation_in"] for r in v), 2)
               for k, v in records_by_key.items()}
+    avg_highs = {
+        k: round(sum(r["tmax_f"] for r in v if r.get("tmax_f") is not None)
+                  / max(1, sum(1 for r in v if r.get("tmax_f") is not None)), 1)
+        for k, v in temp_records_by_key.items()
+    }
     print(f"\nWrote {SITE_DIR}/index.html, data.json, state.json", file=sys.stderr)
     print(f"Season totals: {totals}", file=sys.stderr)
+    print(f"Season avg highs: {avg_highs}", file=sys.stderr)
 
 
 if __name__ == "__main__":

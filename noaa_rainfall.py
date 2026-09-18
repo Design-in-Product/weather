@@ -43,7 +43,8 @@ from urllib.request import Request, urlopen
 NOAA_API_BASE = "https://www.ncei.noaa.gov/access/services/data/v1"
 DATASET = "daily-summaries"
 DATA_TYPES = "PRCP"              # Precipitation (tenths of mm from GHCND)
-UNITS = "standard"               # API returns inches when units=standard
+DATA_TYPES_TEMP = "TMAX,TMIN"    # Daily high/low
+UNITS = "standard"               # API returns inches/Fahrenheit when units=standard
 
 # Stations to try, in order of preference.
 # Redwood City is closest to Palo Alto with reliable data;
@@ -139,6 +140,74 @@ def fetch_rainfall(start: date, end: date, station_id: str = DEFAULT_STATION_ID,
     return all_records
 
 
+def fetch_temperature(start: date, end: date, station_id: str = DEFAULT_STATION_ID,
+                      debug: bool = False) -> list[dict]:
+    """Fetch daily high/low temperature from the NOAA NCEI public API.
+
+    Returns a list of dicts with keys: date, tmax_f, tmin_f. Either may be
+    None if the station didn't report that reading on a given date.
+    """
+    all_records: list[dict] = []
+    chunk_start = start
+
+    while chunk_start <= end:
+        chunk_end = min(end, chunk_start.replace(year=chunk_start.year + 1) - timedelta(days=1))
+
+        params = {
+            "dataset": DATASET,
+            "dataTypes": DATA_TYPES_TEMP,
+            "stations": station_id,
+            "startDate": chunk_start.isoformat(),
+            "endDate": chunk_end.isoformat(),
+            "format": "json",
+            "units": UNITS,
+        }
+
+        url = f"{NOAA_API_BASE}?{urlencode(params)}"
+        req = Request(url, headers={"Accept": "application/json"})
+
+        try:
+            with urlopen(req, timeout=30) as resp:
+                body = resp.read().decode()
+        except HTTPError as exc:
+            print(f"Error: NOAA API returned HTTP {exc.code}", file=sys.stderr)
+            print(f"URL: {url}", file=sys.stderr)
+            sys.exit(1)
+        except URLError as exc:
+            print(f"Error: Could not reach NOAA API: {exc.reason}", file=sys.stderr)
+            sys.exit(1)
+
+        if debug:
+            print(f"DEBUG URL: {url}", file=sys.stderr)
+            print(f"DEBUG response ({len(body)} bytes): {body[:500]}", file=sys.stderr)
+
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            if debug:
+                print(f"DEBUG: JSONDecodeError, body was: {body[:500]!r}", file=sys.stderr)
+            data = []
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for rec in data:
+            rec_date = rec.get("DATE", "")[:10]
+            tmax = rec.get("TMAX")
+            tmin = rec.get("TMIN")
+            if rec_date and (tmax is not None or tmin is not None):
+                all_records.append({
+                    "date": rec_date,
+                    "tmax_f": float(tmax) if tmax is not None else None,
+                    "tmin_f": float(tmin) if tmin is not None else None,
+                })
+
+        chunk_start = chunk_end + timedelta(days=1)
+
+    all_records.sort(key=lambda r: r["date"])
+    return all_records
+
+
 # ---------------------------------------------------------------------------
 # IEM (Iowa Environmental Mesonet) — near-real-time ASOS observations
 # ---------------------------------------------------------------------------
@@ -217,6 +286,82 @@ def fetch_rainfall_iem(station_icao: str, network: str,
 def merge_rainfall_records(primary: list[dict],
                            supplement: list[dict]) -> list[dict]:
     """Merge two record lists, preferring *primary* (NCEI) for any shared date."""
+    primary_dates = {r["date"] for r in primary}
+    merged = list(primary)
+    for r in supplement:
+        if r["date"] not in primary_dates:
+            merged.append(r)
+    merged.sort(key=lambda r: r["date"])
+    return merged
+
+
+def fetch_temperature_iem(station_icao: str, network: str,
+                          start: date, end: date,
+                          debug: bool = False) -> list[dict]:
+    """Fetch daily high/low temperature from the Iowa Environmental Mesonet.
+
+    Same near-real-time gap-fill role as fetch_rainfall_iem, but for
+    max_tmpf/min_tmpf instead of precip.
+    """
+    all_records: list[dict] = []
+    cur = start.replace(day=1)
+
+    while cur <= end:
+        params = {
+            "station": station_icao,
+            "network": network,
+            "year": str(cur.year),
+            "month": str(cur.month),
+        }
+        url = f"{IEM_API_BASE}?{urlencode(params)}"
+        req = Request(url, headers={"Accept": "application/json"})
+
+        if debug:
+            print(f"DEBUG IEM URL: {url}", file=sys.stderr)
+
+        try:
+            with urlopen(req, timeout=30) as resp:
+                body = resp.read().decode()
+        except (HTTPError, URLError) as exc:
+            # Non-fatal: IEM is a supplementary source.
+            if debug:
+                print(f"DEBUG IEM error for {station_icao} "
+                      f"{cur.year}-{cur.month:02d}: {exc}", file=sys.stderr)
+            if cur.month == 12:
+                cur = cur.replace(year=cur.year + 1, month=1)
+            else:
+                cur = cur.replace(month=cur.month + 1)
+            continue
+
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            data = {}
+
+        for rec in data.get("data", []):
+            rec_date = rec.get("date", "")[:10]
+            tmax = rec.get("max_tmpf")
+            tmin = rec.get("min_tmpf")
+            if (rec_date and (tmax is not None or tmin is not None)
+                    and start.isoformat() <= rec_date <= end.isoformat()):
+                all_records.append({
+                    "date": rec_date,
+                    "tmax_f": float(tmax) if tmax is not None else None,
+                    "tmin_f": float(tmin) if tmin is not None else None,
+                })
+
+        if cur.month == 12:
+            cur = cur.replace(year=cur.year + 1, month=1)
+        else:
+            cur = cur.replace(month=cur.month + 1)
+
+    all_records.sort(key=lambda r: r["date"])
+    return all_records
+
+
+def merge_temperature_records(primary: list[dict],
+                              supplement: list[dict]) -> list[dict]:
+    """Merge two temperature record lists, preferring *primary* (NCEI)."""
     primary_dates = {r["date"] for r in primary}
     merged = list(primary)
     for r in supplement:
@@ -413,6 +558,36 @@ h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
 }
 .source-section { display: none; }
 .source-section.active { display: block; }
+.metric-selector {
+  display: flex;
+  gap: 4px;
+  background: #e3e9f0;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 8px;
+}
+.metric-btn {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  color: #4a5663;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.metric-btn.active {
+  background: white;
+  color: #1a2733;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.temp-hero .number, .temp-hero .amount { color: #ea580c; }
+.temp-section .recent .amount { color: #ea580c; }
+.fill.temp-fill { background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%); }
+.day.temp { background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%); }
 footer {
   margin-top: 24px;
   font-size: 11px;
@@ -425,15 +600,37 @@ footer a:hover { color: #2563eb; border-bottom-color: #2563eb; }
 """
 
 _HTML_JS = """
+let activeMetric = 'rain';
+let activeSource = document.querySelector('.src-btn.active')
+  ? document.querySelector('.src-btn.active').dataset.source
+  : null;
+
+function updateSections() {
+  document.querySelectorAll('.source-section').forEach(s => {
+    s.classList.toggle(
+      'active',
+      s.dataset.metric === activeMetric && s.dataset.source === activeSource
+    );
+  });
+}
+
+document.querySelectorAll('.metric-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeMetric = btn.dataset.metric;
+    document.querySelectorAll('.metric-btn').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+    updateSections();
+  });
+});
+
 document.querySelectorAll('.src-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const key = btn.dataset.source;
+    activeSource = btn.dataset.source;
     document.querySelectorAll('.src-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.source === key);
+      b.classList.toggle('active', b.dataset.source === activeSource);
     });
-    document.querySelectorAll('.source-section').forEach(s => {
-      s.classList.toggle('active', s.dataset.source === key);
-    });
+    updateSections();
   });
 });
 """
@@ -553,7 +750,7 @@ def _render_source_section(source: dict, season_start: date, today: date,
         strip_labels = ""
 
     return (
-        f'<section class="source-section{active_cls}" data-source="{source["key"]}">'
+        f'<section class="source-section{active_cls}" data-metric="rain" data-source="{source["key"]}">'
         '<div class="card hero">'
         f'<div><span class="number">{total:.2f}</span><span class="unit"> in</span></div>'
         '<div class="label">Season total</div>'
@@ -574,16 +771,148 @@ def _render_source_section(source: dict, season_start: date, today: date,
     )
 
 
+def _compute_temp_summary(records: list[dict], today: date) -> dict:
+    """Compute season summary stats from a list of daily high/low records."""
+    highs = [r["tmax_f"] for r in records if r.get("tmax_f") is not None]
+    lows = [r["tmin_f"] for r in records if r.get("tmin_f") is not None]
+    avg_high = sum(highs) / len(highs) if highs else None
+    avg_low = sum(lows) / len(lows) if lows else None
+
+    monthly_highs: dict[str, list[float]] = {}
+    for r in records:
+        if r.get("tmax_f") is None:
+            continue
+        key = r["date"][:7]  # YYYY-MM
+        monthly_highs.setdefault(key, []).append(r["tmax_f"])
+    monthly_avg_high = {k: sum(v) / len(v) for k, v in monthly_highs.items()}
+
+    latest: Optional[dict] = None
+    for r in reversed(records):
+        if r.get("tmax_f") is not None or r.get("tmin_f") is not None:
+            latest = r
+            break
+
+    return {
+        "avg_high": avg_high,
+        "avg_low": avg_low,
+        "monthly_avg_high": monthly_avg_high,
+        "latest": latest,
+    }
+
+
+def _render_temp_section(source: dict, season_start: date, today: date,
+                          is_default: bool) -> str:
+    """Render one <section> for a single source/station's temperature."""
+    summary = _compute_temp_summary(source["records"], today)
+    active_cls = " active" if is_default else ""
+    note = source.get("note", "")
+    note_html = f'<div class="note">{note}</div>' if note else ""
+
+    avg_high = summary["avg_high"]
+    avg_low = summary["avg_low"]
+    avg_high_str = f"{avg_high:.0f}" if avg_high is not None else "–"
+    avg_low_lbl = f"avg low {avg_low:.0f}°F" if avg_low is not None else "avg low unavailable"
+
+    # Most recent reading card
+    latest = summary["latest"]
+    if latest:
+        latest_dt = datetime.strptime(latest["date"], "%Y-%m-%d")
+        days_since = (today - latest_dt.date()).days
+        if days_since == 0:
+            ago_lbl = "today"
+        elif days_since == 1:
+            ago_lbl = "yesterday"
+        else:
+            ago_lbl = f"{days_since} days ago"
+        hi = f'{latest["tmax_f"]:.0f}°' if latest.get("tmax_f") is not None else "–"
+        lo = f'{latest["tmin_f"]:.0f}°' if latest.get("tmin_f") is not None else "–"
+        recent_html = (
+            '<div class="section-title">Most recent reading</div>'
+            '<div class="recent">'
+            f'<div class="date">{latest_dt.strftime("%a %b %-d")} · {ago_lbl}</div>'
+            f'<div class="amount">{hi}<span class="unit"> high / {lo} low</span></div>'
+            '</div>'
+        )
+    else:
+        recent_html = (
+            '<div class="section-title">Most recent reading</div>'
+            '<div class="recent"><div class="date">No temperature data recorded this season</div></div>'
+        )
+
+    # Monthly average-high bars
+    monthly_avg_high = summary["monthly_avg_high"]
+    months = _iter_season_months(season_start, today)
+    max_month = max((monthly_avg_high.get(m) or 0 for m in months), default=0) or 1
+    bars_html = ""
+    for m in months:
+        v = monthly_avg_high.get(m)
+        height_pct = (v / max_month * 100) if v else 0
+        label = datetime.strptime(m, "%Y-%m").strftime("%b")
+        val_str = f"{v:.0f}" if v is not None else "–"
+        bars_html += (
+            '<div class="bar">'
+            f'<div class="month-val">{val_str}</div>'
+            '<div class="fill-wrap">'
+            f'<div class="fill temp-fill" style="height: {height_pct:.0f}%"></div>'
+            '</div>'
+            f'<div class="month-label">{label}</div>'
+            '</div>'
+        )
+
+    # Daily strip — last 14 days, scaled by daily high
+    recent_records = [r for r in source["records"][-14:] if r.get("tmax_f") is not None]
+    highs_only = [r["tmax_f"] for r in recent_records]
+    max_day = max(highs_only, default=0)
+    min_day = min(highs_only, default=0)
+    span = (max_day - min_day) or 1
+    strip_html = ""
+    for r in recent_records:
+        h_pct = max(10, (r["tmax_f"] - min_day) / span * 100)
+        strip_html += f'<div class="day temp" style="height: {h_pct:.0f}%"></div>'
+    if recent_records:
+        first = datetime.strptime(recent_records[0]["date"], "%Y-%m-%d").strftime("%b %-d")
+        last = datetime.strptime(recent_records[-1]["date"], "%Y-%m-%d").strftime("%b %-d")
+        strip_labels = f'<div class="daily-strip-labels"><span>{first}</span><span>{last}</span></div>'
+    else:
+        strip_labels = ""
+
+    return (
+        f'<section class="source-section temp-section{active_cls}" data-metric="temperature" data-source="{source["key"]}">'
+        '<div class="card hero temp-hero">'
+        f'<div><span class="number">{avg_high_str}</span><span class="unit">°F</span></div>'
+        '<div class="label">Season avg high</div>'
+        f'<div class="meta">{avg_low_lbl} · since {season_start.strftime("%b %-d, %Y")}</div>'
+        f'{note_html}'
+        '</div>'
+        f'<div class="card">{recent_html}</div>'
+        '<div class="card">'
+        '<div class="section-title">Monthly avg high (°F)</div>'
+        f'<div class="monthly-bars">{bars_html}</div>'
+        '</div>'
+        '<div class="card">'
+        '<div class="section-title">Last 14 days — daily high</div>'
+        f'<div class="daily-strip">{strip_html}</div>'
+        f'{strip_labels}'
+        '</div>'
+        '</section>'
+    )
+
+
 def render_html(sources: list[dict], season_start: date, season_end: date,
                 generated_at: datetime,
-                default_source_key: str = "palo_alto_estimate") -> str:
+                default_source_key: str = "palo_alto_estimate",
+                temp_sources: Optional[list[dict]] = None) -> str:
     """Render a self-contained mobile-first HTML page.
 
-    Each entry in `sources` should be a dict with keys:
+    Each entry in `sources` (rain) should be a dict with keys:
         key      – stable identifier used for selector buttons
         name     – short friendly label shown in the selector
         records  – list of {date, precipitation_in} dicts
         note     – optional caption (e.g., station ID or formula)
+
+    `temp_sources`, if given, mirrors `sources` (same keys/order) with
+    records shaped {date, tmax_f, tmin_f} instead, and adds a Rain /
+    Temperature toggle above the existing station selector.
     """
     if not any(s["key"] == default_source_key for s in sources):
         default_source_key = sources[0]["key"]
@@ -595,13 +924,37 @@ def render_html(sources: list[dict], season_start: date, season_end: date,
             f'<button class="src-btn{active}" data-source="{s["key"]}">{s["name"]}</button>'
         )
 
-    sections_html = "".join(
+    rain_sections_html = "".join(
         _render_source_section(s, season_start, season_end,
                                 is_default=(s["key"] == default_source_key))
         for s in sources
     )
 
+    metric_selector_html = ""
+    temp_sections_html = ""
+    if temp_sources:
+        metric_selector_html = (
+            '<div class="metric-selector">'
+            '<button class="metric-btn active" data-metric="rain">Rain</button>'
+            '<button class="metric-btn" data-metric="temperature">Temperature</button>'
+            '</div>'
+        )
+        # Metric defaults to "rain" on load, so no temperature section starts active.
+        temp_sections_html = "".join(
+            _render_temp_section(s, season_start, season_end, is_default=False)
+            for s in temp_sources
+        )
+
+    sections_html = rain_sections_html + temp_sections_html
+
     generated_str = generated_at.strftime("%b %-d, %Y at %-I:%M %p")
+    data_note = (
+        "Data: NOAA NCEI + <a href=\"https://mesonet.agron.iastate.edu/\">Iowa "
+        "Environmental Mesonet</a> (precipitation & temperature)"
+        if temp_sources else
+        "Data: NOAA NCEI + <a href=\"https://mesonet.agron.iastate.edu/\">Iowa "
+        "Environmental Mesonet</a>"
+    )
 
     return f"""<!doctype html>
 <html lang="en">
@@ -609,18 +962,19 @@ def render_html(sources: list[dict], season_start: date, season_end: date,
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
-<title>Palo Alto Rainfall</title>
+<title>Palo Alto Weather</title>
 <style>{_HTML_CSS}</style>
 </head>
 <body>
 <header>
-  <h1>Palo Alto Rainfall</h1>
+  <h1>Palo Alto Weather</h1>
   <div class="subtitle">Rain season {season_start.strftime("%b %Y")} – {season_end.strftime("%b %Y")}</div>
 </header>
+{metric_selector_html}
 <div class="selector">{selector_html}</div>
 {sections_html}
 <footer>
-  Data: NOAA NCEI + <a href="https://mesonet.agron.iastate.edu/">Iowa Environmental Mesonet</a> · Updated {generated_str}<br>
+  {data_note} · Updated {generated_str}<br>
   Stations: USC00047339 (Redwood City) · USW00023293 / SJC (San Jose) · USW00023234 / SFO<br>
   <a href="./sketches/">Eight ways to look at rain →</a>
 </footer>
