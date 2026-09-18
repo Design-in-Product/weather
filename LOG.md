@@ -4,6 +4,60 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-09-18 ~11:25 — Temperature section shipped (Zephyr)
+
+First scheduled Amber duty-cycle fire. Synced clean (ff-only merge picked up
+five days of cross-pollination briefs, nothing else pending). Checked
+`docs/mail/` and `docs/inbox/`: the only actionable item was
+`docs/mail/xian-via-janus-to-zephyr-feature-request-temperature-section-2026-09-12.md`
+— xian's request (relayed by Janus 2026-09-12) for a temperature section
+"somewhat parallel" to rain. No reply owed back to Janus; this was a
+build request, not a question.
+
+**Shipped** (`d8b2908`, pushed to `main`, deployed via manual
+`workflow_dispatch` of "Update rainfall site" — didn't want to wait for
+tomorrow's 14:00 UTC cron to get this live):
+- `noaa_rainfall.py`: added `fetch_temperature` (NCEI TMAX/TMIN, confirmed
+  °F under `units=standard`) and `fetch_temperature_iem` (IEM
+  `max_tmpf`/`min_tmpf`, confirmed via live API probe) + `merge_temperature_records`,
+  mirroring the existing rain fetch/gap-fill pair. Added `_compute_temp_summary`
+  and `_render_temp_section` (hero = season avg high, most-recent
+  high/low card, monthly avg-high bars, last-14-days daily-high strip) —
+  same card/CSS grammar as rain, orange accent instead of blue. `render_html`
+  now takes an optional `temp_sources` param and renders a Rain/Temperature
+  toggle above the existing station selector; a section shows only when
+  both the metric toggle and station selector match (JS rewritten
+  accordingly). Page title/h1 changed from "Palo Alto Rainfall" to
+  "Palo Alto Weather" since it's no longer rain-only.
+- `build_site.py`: added `compute_palo_alto_temp_estimate` — same
+  `(2*SJ + RWC)/3` weighting as the rain estimate, applied independently to
+  tmax_f/tmin_f, falling back to whichever station reported. Wired the full
+  fetch → IEM-gap-fill → estimate → render pipeline in `main()`, reusing
+  the same `IEM_MAPPING`. Temperature records land in `data.json` under a
+  new `temperature_records` key.
+- **Deliberately did not touch `state.json`.** Its fingerprints exist
+  solely so `detect_and_notify.py` can set-diff for "new rain" emails. Adding
+  temperature fingerprints there would be inert at best (the parser splits
+  `date:precip` on the first `:` and silently drops anything that doesn't
+  parse as a float) and confusing at worst. Temperature has no notification
+  path yet — passive only, matching the "no-new-rain-no-email" design for rain.
+
+**Verification:** full `build_site.py` run against live NOAA/IEM endpoints
+(no mocks), `node --check` on the extracted `<script>` block, HTML structure
+counts (4 rain + 4 temp sections, correct `data-metric`/`data-source`
+pairing), and existing CLI smoke test (`--station ... --json`) to confirm
+the rain-only code path is untouched. Manually triggered the Action and
+confirmed `https://weather.dinp.xyz/` now serves the `Palo Alto Weather`
+title, the metric toggle, and 4 live temperature sections.
+
+**Open for xian:** temperature has no seasonal framing the way Oct–Sep
+rain does — I reused the rain season window (Oct 1–today) for the
+temperature aggregates purely for structural parallelism, not because
+there's a meteorological "temperature season." Flag if a calendar-year or
+rolling-12-month window would make more sense here.
+
+---
+
 ## 2026-04-12 ~08:45 — IEM gap-fill wired in (Zephyr)
 
 Xian noticed the dashboard was missing the last few days of rain because NCEI GHCN-Daily lags 1-3 days (airport) to 2-5+ days (COOP). Briggs confirmed Apple Weather (which reads real-time METAR/ASOS, not GHCN-Daily) showed current data. Researched alternative sources; the **Iowa Environmental Mesonet (IEM)** at Iowa State is the winner: free, no auth, ASOS stations, data through today.
