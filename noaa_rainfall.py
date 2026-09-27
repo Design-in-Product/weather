@@ -556,6 +556,18 @@ h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
   display: flex; justify-content: space-between;
   font-size: 10px; color: #6a7785; margin-top: 6px;
 }
+.strip-row { display: flex; align-items: stretch; gap: 8px; }
+.strip-row .daily-strip { flex: 1 1 auto; }
+.strip-axis {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #6a7785;
+  text-align: right;
+  white-space: nowrap;
+}
 .source-section { display: none; }
 .source-section.active { display: block; }
 .metric-selector {
@@ -746,8 +758,11 @@ def _render_source_section(source: dict, season_start: date, today: date,
         first = datetime.strptime(recent_records[0]["date"], "%Y-%m-%d").strftime("%b %-d")
         last = datetime.strptime(recent_records[-1]["date"], "%Y-%m-%d").strftime("%b %-d")
         strip_labels = f'<div class="daily-strip-labels"><span>{first}</span><span>{last}</span></div>'
+        top_val = f'{max_day:.2f}"' if max_day > 0 else '0"'
+        axis_html = f'<div class="strip-axis"><span>{top_val}</span><span>0"</span></div>'
     else:
         strip_labels = ""
+        axis_html = ""
 
     return (
         f'<section class="source-section{active_cls}" data-metric="rain" data-source="{source["key"]}">'
@@ -764,7 +779,10 @@ def _render_source_section(source: dict, season_start: date, today: date,
         '</div>'
         '<div class="card">'
         '<div class="section-title">Last 14 days</div>'
+        '<div class="strip-row">'
+        f'{axis_html}'
         f'<div class="daily-strip">{strip_html}</div>'
+        '</div>'
         f'{strip_labels}'
         '</div>'
         '</section>'
@@ -873,8 +891,10 @@ def _render_temp_section(source: dict, season_start: date, today: date,
         first = datetime.strptime(recent_records[0]["date"], "%Y-%m-%d").strftime("%b %-d")
         last = datetime.strptime(recent_records[-1]["date"], "%Y-%m-%d").strftime("%b %-d")
         strip_labels = f'<div class="daily-strip-labels"><span>{first}</span><span>{last}</span></div>'
+        axis_html = f'<div class="strip-axis"><span>{max_day:.0f}°</span><span>{min_day:.0f}°</span></div>'
     else:
         strip_labels = ""
+        axis_html = ""
 
     return (
         f'<section class="source-section temp-section{active_cls}" data-metric="temperature" data-source="{source["key"]}">'
@@ -891,7 +911,10 @@ def _render_temp_section(source: dict, season_start: date, today: date,
         '</div>'
         '<div class="card">'
         '<div class="section-title">Last 14 days — daily high</div>'
+        '<div class="strip-row">'
+        f'{axis_html}'
         f'<div class="daily-strip">{strip_html}</div>'
+        '</div>'
         f'{strip_labels}'
         '</div>'
         '</section>'

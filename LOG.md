@@ -4,6 +4,66 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-09-27 — Real mail after 8 no-op fires; axis shipped, reply sent (Zephyr)
+
+First non-trivial fire since the temperature section shipped 2026-09-18. Four
+memos landed in `docs/mail/`:
+
+1. Housekeeping from Janus: `docs/inbox/` folded into `docs/mail/` on xian's
+   2026-09-26 ruling (his two April memos moved; CLAUDE.md already updated
+   upstream). Removed the now-empty `docs/inbox/` dir; nothing else to do —
+   my fires already read `docs/mail/` only.
+2. Apology + review request: xian wasn't told the temperature section shipped
+   (my LOG said "shipped," the cross-pollination sweep read the following
+   fires as no-ops and never surfaced "go look at this" to his page — a gap
+   in *their* pipeline, not mine, per Janus). Asked for a what-to-look-at
+   note and a list of pane decisions he should ratify.
+3. His verdict after looking: **"Looks great! ... this is stellar."** One
+   direct ask (do it, no discussion): a vertical axis on the past-week
+   strip views. One plan request (propose only): year-over-year comparison.
+4. A discussion-only question: does temperature need the same
+   cross-station triangulation rainfall did?
+
+**Shipped this fire** — vertical axis on both "Last 14 days" strips (rain
+and temperature). Rain's strip now shows max-of-window / 0" to its left;
+temperature's shows max/min-of-window (the strip was already scaled between
+those two, so the axis just labels the implicit scale). New `.strip-row`/
+`.strip-axis` CSS; both `_render_source_section` and `_render_temp_section`
+build an `axis_html` block alongside the existing `strip_labels`. Verified
+via a fresh `build_site.py` run + `node --check` on the extracted script +
+manual inspection of both a rain and a temperature section's markup.
+
+**Replied, not built** — `docs/mail/zephyr-to-xian-via-janus-temperature-review-notes-yoy-plan-triangulation-2026-09-27.md`
+covers all four remaining items:
+- The what-to-look-at note (where the toggle lives, what each card shows,
+  data provenance, what's provisional).
+- Pane discussion points, most important first: **the season window resets
+  every Oct 1, which zeroes out summer heat data the moment rain season
+  starts** — this is the one I flagged as an actual bug in the design, not
+  just an open style question, since temperature's real extremes (June–Sep)
+  get cut off right when a new "season" begins. Also flagged: hero metric
+  (season avg high vs. today's reading), toggle vs. stacked layout, °F-only.
+- Year-over-year plan: reuse-the-monthly-bars-as-an-overlay is the cheapest
+  shape (translucent second bar per month for last year); fetch cost is
+  roughly one more full NCEI+IEM pass per prior year, so I flagged that it
+  needs caching of completed seasons if it grows past one year back —
+  every current build re-fetches the whole season from scratch, which is
+  fine for "this season" but wasteful for "seasons that already ended."
+- Triangulation answer: **partly, and I think we already carried over the
+  part that matters.** Rain's triangulation solved two problems — NCEI's
+  reporting lag (fixed identically for temp via the same IEM gap-fill) and
+  "no station in Palo Alto" (fixed identically via the same `(2·SJ+RWC)/3`
+  weighting on highs/lows). No new triangulation added; flagged what I'd
+  check if more confidence is wanted (SJ vs. RWC disagreement that looks
+  like station noise rather than real marine-layer geography).
+
+Also called out one small discrepancy in the reply rather than silently
+"fixing" it: the direct ask referred to "seven-day views," but the strips
+are 14 days, not 7. Left the window alone since the axis was the explicit
+ask — flagged it for xian to confirm rather than guessing at a second change.
+
+---
+
 ## 2026-09-26 — No-op fire (Zephyr)
 
 Duty-cycle fire. Synced clean (ff-only; also picked up a small retroactive
