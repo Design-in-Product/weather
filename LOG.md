@@ -4,6 +4,62 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-09-28 — Rulings shipped: today's-high/low hero, year-over-year overlay (Zephyr)
+
+Synced clean, one new memo:
+`docs/mail/xian-via-janus-to-zephyr-rulings-hero-is-today-14-days-stays-yoy-faint-bar-go-2026-09-27.md` — xian's
+answers to the 09-27 reply. Rulings: temperature hero → today's high/low
+(build it); 14-day strips stay (scroll-back further is a noted future want,
+not now); year-over-year → go with the faint-overlay-on-monthly-bars shape,
+with completed seasons cached rather than re-fetched; triangulation — he's
+handling that thread directly with Janus, nothing needed from me; toggle
+vs. stacked and units — unanswered, left as-is.
+
+**Shipped this fire** (`f398a32`, deployed live via manual dispatch):
+
+- **Temperature hero swap.** `_render_temp_section` now leads with the
+  latest day's high/low ("Daily high" + relative-date meta), matching what
+  used to be the "Most recent reading" card. Season avg high/low moved to
+  a plain secondary card ("Season average") — demoted, not deleted.
+- **Year-over-year overlay.** New `_prior_season_month_key()` +
+  `_render_monthly_bars()` helper (shared by rain and temperature) renders
+  a second, faint (opacity 0.35) bar per month showing the same calendar
+  month one season back, when cached data exists. `.fill-wrap` went from a
+  single full-width bar to a flex row so one or two bars per month both
+  lay out correctly without extra markup branching.
+- **New `build_history.py`** — a one-off maintenance script, not part of
+  the daily Action. Fetches a single *completed* season's rain + temp for
+  all three real stations (no IEM gap-fill needed — a season that old is
+  long past NCEI's lag) and writes `history/<start>-<end>.json`. Ran it now
+  for Oct 2024–Sep 2025 (the most recently completed season) and committed
+  the result, so the overlay has live comparison data immediately rather
+  than waiting a year for the mechanism to accumulate its first sample.
+  `build_site.py`'s new `load_prior_season_monthlies()` reads that cache
+  file if present and returns empty dicts otherwise — no cache, no crash,
+  the overlay just doesn't render. This matches the plan I sent 09-27:
+  a completed season can't change, so there's no reason to re-fetch it
+  from NCEI/IEM on every one of the ~365 daily builds it'll sit through.
+  One manual step going forward: after Sep 30 each year, someone runs
+  `build_history.py` once to freeze that season and commits the file.
+- README: added a short "Year-over-year comparison" section documenting
+  `history/` and how to regenerate it.
+
+Verified with a full `build_site.py` run (fresh NCEI/IEM fetch, confirmed
+`prior_monthly` populated for both rain and temp sources from the new cache
+file), spot-checked one faint-bar value against the raw history JSON
+(Redwood City Oct 2024 rain = 0.00", which is exactly why that month's
+overlay bar rendered at 0% — not a bug), `node --check` on the extracted
+script, and the existing CLI smoke test. Manually triggered the deploy and
+confirmed live: 4 "Daily high" heroes, 4 "Season average" cards, and the
+"— faint = last season" caption on all 8 monthly-bar cards (4 rain + 4 temp).
+
+Replied confirming what shipped:
+`docs/mail/zephyr-to-xian-via-janus-rulings-shipped-2026-09-28.md`. Season
+window (his point a) is still open on his end — nothing to do until he
+responds.
+
+---
+
 ## 2026-09-27 — Real mail after 8 no-op fires; axis shipped, reply sent (Zephyr)
 
 First non-trivial fire since the temperature section shipped 2026-09-18. Four
