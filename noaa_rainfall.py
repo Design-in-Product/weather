@@ -528,16 +528,24 @@ h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
   width: 100%;
   display: flex;
   align-items: flex-end;
+  gap: 3px;
 }
 .monthly-bars .bar .fill {
-  width: 100%;
+  flex: 1 1 0;
   background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
   border-radius: 4px 4px 0 0;
   min-height: 1px;
 }
+.monthly-bars .bar .fill.prior-fill { opacity: 0.35; }
 .monthly-bars .bar .month-label {
   font-size: 10px; color: #6a7785;
   margin-top: 4px;
+}
+.section-title .note-inline {
+  text-transform: none;
+  font-weight: 400;
+  color: #8a96a3;
+  letter-spacing: normal;
 }
 .daily-strip {
   display: flex;
@@ -687,6 +695,55 @@ def _iter_season_months(season_start: date, today: date) -> list[str]:
     return months
 
 
+def _prior_season_month_key(month_key: str) -> str:
+    """Map a current-season "YYYY-MM" to the same seasonal position one season back.
+
+    Both this season and last season share the same year-shift pattern
+    relative to their own Oct 1 start, so subtracting 1 from the calendar
+    year always lands on the equivalent month, whether it's in the Oct-Dec
+    or Jan-Sep half of the season.
+    """
+    y, m = month_key.split("-")
+    return f"{int(y) - 1:04d}-{m}"
+
+
+def _render_monthly_bars(months: list[str], current: dict[str, float],
+                          prior: dict[str, float], value_fmt, fill_cls: str = "fill") -> tuple[str, bool]:
+    """Render monthly bar HTML with an optional faint prior-season overlay.
+
+    `current`/`prior` map "YYYY-MM" -> value (prior keyed by its own real
+    calendar months). Returns (bars_html, has_prior) so callers can caption
+    the section only when there's an actual comparison to show.
+    """
+    prior_vals = [pv for m in months
+                  if (pv := prior.get(_prior_season_month_key(m))) is not None]
+    current_vals = [v for m in months if (v := current.get(m)) is not None]
+    max_val = max([*current_vals, *prior_vals], default=0) or 1
+    has_prior = bool(prior_vals)
+
+    bars_html = ""
+    for m in months:
+        v = current.get(m)
+        height_pct = ((v or 0) / max_val * 100) if max_val > 0 else 0
+        label = datetime.strptime(m, "%Y-%m").strftime("%b")
+        pv = prior.get(_prior_season_month_key(m))
+        prior_bar = ""
+        if pv is not None:
+            prior_pct = (pv / max_val * 100) if max_val > 0 else 0
+            prior_bar = f'<div class="{fill_cls} prior-fill" style="height: {prior_pct:.0f}%"></div>'
+        bars_html += (
+            '<div class="bar">'
+            f'<div class="month-val">{value_fmt(v)}</div>'
+            '<div class="fill-wrap">'
+            f'{prior_bar}'
+            f'<div class="{fill_cls}" style="height: {height_pct:.0f}%"></div>'
+            '</div>'
+            f'<div class="month-label">{label}</div>'
+            '</div>'
+        )
+    return bars_html, has_prior
+
+
 def _render_source_section(source: dict, season_start: date, today: date,
                             is_default: bool) -> str:
     """Render one <section> for a single source/station."""
@@ -722,24 +779,13 @@ def _render_source_section(source: dict, season_start: date, today: date,
             '<div class="recent"><div class="date">No rain recorded this season</div></div>'
         )
 
-    # Monthly bars
+    # Monthly bars, with a faint prior-season overlay when history/ has one.
     monthly = summary["monthly"]
     months = _iter_season_months(season_start, today)
-    max_month = max((monthly.get(m, 0) for m in months), default=0) or 1
-    bars_html = ""
-    for m in months:
-        v = monthly.get(m, 0)
-        height_pct = (v / max_month * 100) if max_month > 0 else 0
-        label = datetime.strptime(m, "%Y-%m").strftime("%b")
-        bars_html += (
-            '<div class="bar">'
-            f'<div class="month-val">{v:.1f}</div>'
-            '<div class="fill-wrap">'
-            f'<div class="fill" style="height: {height_pct:.0f}%"></div>'
-            '</div>'
-            f'<div class="month-label">{label}</div>'
-            '</div>'
-        )
+    prior_monthly = source.get("prior_monthly") or {}
+    bars_html, has_prior = _render_monthly_bars(
+        months, monthly, prior_monthly, lambda v: f"{(v or 0):.1f}")
+    monthly_note = ' <span class="note-inline">— faint = last season</span>' if has_prior else ""
 
     # Daily strip — last 14 days
     recent_records = source["records"][-14:]
@@ -774,7 +820,7 @@ def _render_source_section(source: dict, season_start: date, today: date,
         '</div>'
         f'<div class="card">{recent_html}</div>'
         '<div class="card">'
-        '<div class="section-title">Monthly totals (in)</div>'
+        f'<div class="section-title">Monthly totals (in){monthly_note}</div>'
         f'<div class="monthly-bars">{bars_html}</div>'
         '</div>'
         '<div class="card">'
@@ -828,10 +874,11 @@ def _render_temp_section(source: dict, season_start: date, today: date,
 
     avg_high = summary["avg_high"]
     avg_low = summary["avg_low"]
-    avg_high_str = f"{avg_high:.0f}" if avg_high is not None else "–"
-    avg_low_lbl = f"avg low {avg_low:.0f}°F" if avg_low is not None else "avg low unavailable"
+    avg_high_str = f"{avg_high:.0f}°" if avg_high is not None else "–"
+    avg_low_str = f"{avg_low:.0f}°" if avg_low is not None else "–"
 
-    # Most recent reading card
+    # Hero: today's (or most recent) high/low — ratified 2026-09-27, was
+    # previously "season avg high"; that stat is now the secondary card below.
     latest = summary["latest"]
     if latest:
         latest_dt = datetime.strptime(latest["date"], "%Y-%m-%d")
@@ -842,40 +889,33 @@ def _render_temp_section(source: dict, season_start: date, today: date,
             ago_lbl = "yesterday"
         else:
             ago_lbl = f"{days_since} days ago"
-        hi = f'{latest["tmax_f"]:.0f}°' if latest.get("tmax_f") is not None else "–"
-        lo = f'{latest["tmin_f"]:.0f}°' if latest.get("tmin_f") is not None else "–"
-        recent_html = (
-            '<div class="section-title">Most recent reading</div>'
-            '<div class="recent">'
-            f'<div class="date">{latest_dt.strftime("%a %b %-d")} · {ago_lbl}</div>'
-            f'<div class="amount">{hi}<span class="unit"> high / {lo} low</span></div>'
-            '</div>'
-        )
+        hi_str = f'{latest["tmax_f"]:.0f}' if latest.get("tmax_f") is not None else "–"
+        lo_str = f'{latest["tmin_f"]:.0f}°' if latest.get("tmin_f") is not None else "–"
+        hero_meta = f'{ago_lbl.capitalize()} · low {lo_str}'
     else:
-        recent_html = (
-            '<div class="section-title">Most recent reading</div>'
-            '<div class="recent"><div class="date">No temperature data recorded this season</div></div>'
-        )
+        hi_str = "–"
+        hero_meta = "No temperature data recorded this season"
 
-    # Monthly average-high bars
+    # Secondary card: season averages (yesterday's hero, now demoted).
+    season_avg_html = (
+        '<div class="section-title">Season average</div>'
+        '<div class="recent">'
+        '<div class="date">Avg high / avg low</div>'
+        f'<div class="amount">{avg_high_str}<span class="unit"> / {avg_low_str}</span></div>'
+        '</div>'
+    )
+
+    # Monthly average-high bars, with a faint prior-season overlay when
+    # history/ has one.
     monthly_avg_high = summary["monthly_avg_high"]
     months = _iter_season_months(season_start, today)
-    max_month = max((monthly_avg_high.get(m) or 0 for m in months), default=0) or 1
-    bars_html = ""
-    for m in months:
-        v = monthly_avg_high.get(m)
-        height_pct = (v / max_month * 100) if v else 0
-        label = datetime.strptime(m, "%Y-%m").strftime("%b")
-        val_str = f"{v:.0f}" if v is not None else "–"
-        bars_html += (
-            '<div class="bar">'
-            f'<div class="month-val">{val_str}</div>'
-            '<div class="fill-wrap">'
-            f'<div class="fill temp-fill" style="height: {height_pct:.0f}%"></div>'
-            '</div>'
-            f'<div class="month-label">{label}</div>'
-            '</div>'
-        )
+    prior_monthly = source.get("prior_monthly") or {}
+    bars_html, has_prior = _render_monthly_bars(
+        months, monthly_avg_high, prior_monthly,
+        lambda v: f"{v:.0f}" if v is not None else "–",
+        fill_cls="fill temp-fill",
+    )
+    monthly_note = ' <span class="note-inline">— faint = last season</span>' if has_prior else ""
 
     # Daily strip — last 14 days, scaled by daily high
     recent_records = [r for r in source["records"][-14:] if r.get("tmax_f") is not None]
@@ -899,14 +939,14 @@ def _render_temp_section(source: dict, season_start: date, today: date,
     return (
         f'<section class="source-section temp-section{active_cls}" data-metric="temperature" data-source="{source["key"]}">'
         '<div class="card hero temp-hero">'
-        f'<div><span class="number">{avg_high_str}</span><span class="unit">°F</span></div>'
-        '<div class="label">Season avg high</div>'
-        f'<div class="meta">{avg_low_lbl} · since {season_start.strftime("%b %-d, %Y")}</div>'
+        f'<div><span class="number">{hi_str}</span><span class="unit">°F</span></div>'
+        '<div class="label">Daily high</div>'
+        f'<div class="meta">{hero_meta}</div>'
         f'{note_html}'
         '</div>'
-        f'<div class="card">{recent_html}</div>'
+        f'<div class="card">{season_avg_html}</div>'
         '<div class="card">'
-        '<div class="section-title">Monthly avg high (°F)</div>'
+        f'<div class="section-title">Monthly avg high (°F){monthly_note}</div>'
         f'<div class="monthly-bars">{bars_html}</div>'
         '</div>'
         '<div class="card">'

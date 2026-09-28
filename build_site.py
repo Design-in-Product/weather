@@ -60,6 +60,7 @@ SOURCES_CONFIG = [
 REPO_DIR = Path(__file__).parent
 SITE_DIR = REPO_DIR / "site"
 SKETCHES_DIR = REPO_DIR / "sketches"
+HISTORY_DIR = REPO_DIR / "history"
 
 # IEM station mapping for gap-filling NCEI with near-real-time ASOS data.
 # Only airport (ASOS/AWOS) stations have IEM equivalents.
@@ -123,6 +124,44 @@ def compute_palo_alto_temp_estimate(sj_records: list[dict],
     return estimate
 
 
+def load_prior_season_monthlies(season_start: date) -> dict:
+    """Load cached prior-season monthly rain totals + avg highs, if any.
+
+    Reads history/<prior_start_year>-<prior_end_year>.json (written by
+    build_history.py once a season completes) rather than re-fetching a
+    finished season from NCEI/IEM on every daily build. Returns empty dicts
+    when no cache exists yet, so the year-over-year overlay simply doesn't
+    render — never an error.
+    """
+    prev_start_year = season_start.year - 1
+    prev_end_year = season_start.year
+    cache_path = HISTORY_DIR / f"{prev_start_year}-{prev_end_year}.json"
+    if not cache_path.is_file():
+        return {"rain": {}, "temp": {}}
+
+    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+
+    rain_monthly: dict[str, dict[str, float]] = {}
+    for key, records in payload.get("rain_records", {}).items():
+        monthly: dict[str, float] = {}
+        for r in records:
+            mk = r["date"][:7]
+            monthly[mk] = monthly.get(mk, 0) + r["precipitation_in"]
+        rain_monthly[key] = monthly
+
+    temp_monthly: dict[str, dict[str, float]] = {}
+    for key, records in payload.get("temp_records", {}).items():
+        buckets: dict[str, list[float]] = {}
+        for r in records:
+            if r.get("tmax_f") is None:
+                continue
+            mk = r["date"][:7]
+            buckets.setdefault(mk, []).append(r["tmax_f"])
+        temp_monthly[key] = {k: sum(v) / len(v) for k, v in buckets.items()}
+
+    return {"rain": rain_monthly, "temp": temp_monthly}
+
+
 def main() -> None:
     today = date.today()
     season_start = _rain_season_start(today)
@@ -167,6 +206,9 @@ def main() -> None:
         **fetched,
     }
 
+    # Year-over-year: cached prior-season monthlies, if history/ has one.
+    prior = load_prior_season_monthlies(season_start)
+
     # Assemble the source list render_html wants.
     sources = []
     for src in SOURCES_CONFIG:
@@ -175,6 +217,7 @@ def main() -> None:
             "name": src["name"],
             "note": src["note"],
             "records": records_by_key.get(src["key"], []),
+            "prior_monthly": prior["rain"].get(src["key"], {}),
         })
 
     # Temperature: same fetch → IEM gap-fill → PA-estimate pipeline as rain.
@@ -221,6 +264,7 @@ def main() -> None:
             "name": src["name"],
             "note": src["note"],
             "records": temp_records_by_key.get(src["key"], []),
+            "prior_monthly": prior["temp"].get(src["key"], {}),
         })
 
     generated_at = datetime.now()

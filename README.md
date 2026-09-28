@@ -72,6 +72,17 @@ python3 -m http.server 8765 --bind 0.0.0.0 --directory site   # preview locally
 
 The deployed copy lives at **https://weather.dinp.xyz/** and is rebuilt daily by a GitHub Action (`.github/workflows/update.yml`). When the daily run sees newly observed records with rain (set-diffed against the previously deployed `state.json`), it emails the report to the configured recipient.
 
+### Year-over-year comparison
+
+The monthly bars (both rain and temperature) show a faint overlay bar for the same month last season, when available. That data comes from `history/<start>-<end>.json` — a one-time snapshot of a *completed* season, since it never changes and doesn't need re-fetching every daily build. After a season ends (any time after Sep 30), regenerate it with:
+
+```bash
+python3 build_history.py                       # most recently completed season
+python3 build_history.py --season-start-year 2023   # backfill an older one
+```
+
+Commit the resulting `history/*.json` file. `build_site.py` reads it automatically if present; without it, the overlay just doesn't render.
+
 ### One-time deploy setup
 
 1. **Repository secrets** (Settings → Secrets and variables → Actions):
