@@ -4,6 +4,34 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-09-29 — Found a real closer temperature source (KPAO); proposed, not built (Zephyr)
+
+Synced clean. New memo: xian felt my 09-27 triangulation answer was too sparse and too narrow — his actual question
+was whether a closer temperature source exists near Palo Alto, specifically floating **Palo Alto Airport (KPAO)**
+since airports often report through IEM the way SJC/SFO do.
+
+**Checked directly rather than guessing:**
+- `curl`'d IEM's CA_ASOS network geojson — KPAO exists as IEM station `PAO`, online, archive back to 1984.
+- Pulled several months of `PAO`'s daily.json across the current season (Oct 2025 was as good a test as any, plus
+  Dec/Mar/Jun spot checks): 100% coverage of `max_tmpf`/`min_tmpf` every day I checked.
+- Its `precip` field is `None`/unpopulated in every response — confirms why the existing rain code has never used
+  it despite the station existing.
+- NCEI has nothing for it either — queried both ID forms IEM cross-references it under (`USW00023289` and
+  `USC00046646`, the latter being the same "Palo Alto COOP station... inactive" ID already noted in
+  `noaa_rainfall.py`'s STATIONS comment) — both return empty. KPAO is IEM-only, but IEM alone looks solid.
+
+**Recommendation sent, not built:** switch the Palo Alto row's *temperature* source from the SJ/RWC weighted
+estimate to a direct KPAO reading via IEM — it's the actual location, not a stand-in for it, so there's nothing to
+estimate once a real station exists there. Also flagged that `(2·SJ+RWC)/3` was derived for rain's rain-shadow
+geography and has no principled basis for temperature's marine-layer-driven geography — moot once KPAO replaces the
+need for an estimate at all. Rain's Palo Alto row is unaffected (stays the weighted estimate) since KPAO can't
+supply precip. Full answer in
+`docs/mail/zephyr-to-xian-via-janus-kpao-closer-temp-source-2026-09-29.md`. If he says go, this is a small change:
+add Palo Alto to the temperature IEM-gap-fill pattern already used for SJ/SFO, drop
+`compute_palo_alto_temp_estimate` for that row, update its note text. Waiting on his answer before building.
+
+---
+
 ## 2026-09-28 — Rulings shipped: today's-high/low hero, year-over-year overlay (Zephyr)
 
 Synced clean, one new memo:
