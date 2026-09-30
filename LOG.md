@@ -4,6 +4,46 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-09-30 — KPAO shipped for Palo Alto temperature (Zephyr)
+
+Synced clean. New memo: xian's go-ahead —
+`docs/mail/xian-via-janus-to-zephyr-go-use-kpao-for-palo-alto-temperature-2026-09-29.md` — "Please authorize Zephyr
+to use the airport." Also asked whether the year-over-year cache should switch to KPAO too, for a like-for-like
+comparison.
+
+**Verified before building:** spot-checked IEM's `PAO` daily.json across five months of the *prior* completed
+season (Oct 2024, Dec 2024, Mar/Jun/Sep 2025) — 100% `max_tmpf`/`min_tmpf` coverage every month checked, same as the
+current season I'd already verified 09-29. Confirmed the cache should switch too before touching it.
+
+**Shipped** (`d8f4d4d`, deployed live):
+- `build_site.py`: new `PALO_ALTO_TEMP_STATION` constant (`PAO`/`CA_ASOS`). Palo Alto's temperature row is now a
+  standalone IEM fetch — no NCEI baseline exists for it, so this isn't the NCEI+gap-fill pattern the other airport
+  stations use, just a direct IEM pull for the full season range. Removed `compute_palo_alto_temp_estimate` (now
+  dead code — nothing calls it). Added a `temp_note` field to `SOURCES_CONFIG`'s Palo Alto entry so the temperature
+  row's note reads "Station PAO (Palo Alto Airport)" while rain's note is completely unchanged
+  ("Weighted estimate: (2·San Jose + Redwood City) / 3") — same `SOURCES_CONFIG` list, two different note strings
+  depending on which metric is rendering.
+- `build_history.py`: same swap, then regenerated `history/2024-2025.json` — this matters because the year-over-year
+  overlay would otherwise compare this season's KPAO reading against last season's SJ/RWC-estimate reading, which
+  is not a real comparison. Now both sides of the faint bar are KPAO.
+
+**Verified:** full `build_site.py` + `build_history.py` runs, confirmed rain's Palo Alto total/note unchanged
+(14.39", same estimate wording) while temperature's note changed and its season-avg-high dropped from 73° (the old
+estimate) to 69° (direct KPAO) — a real, expected shift, not a bug: KPAO sits on the bay shoreline and likely runs
+cooler than the SJ/RWC blend did. `node --check` on the extracted script, existing CLI smoke test unaffected.
+Manually triggered the deploy and confirmed both note strings live: "Weighted estimate..." still on rain's Palo Alto
+card, "Station PAO (Palo Alto Airport)" now on temperature's.
+
+Replied confirming what shipped, including the like-for-like answer Janus asked for:
+`docs/mail/zephyr-to-xian-via-janus-kpao-shipped-2026-09-30.md`.
+
+Also noting for continuity: today is the last day of the current rain season (Oct 1, 2025 – Sep 30, 2026). Tomorrow
+the season rolls over automatically via `_rain_season_start()` — no code change needed — but once this season is
+fully in NCEI/IEM's archive (a few days in), `build_history.py` should be re-run to freeze `history/2025-2026.json`
+for next year's comparison. Not urgent; noting so it isn't forgotten.
+
+---
+
 ## 2026-09-29 — Found a real closer temperature source (KPAO); proposed, not built (Zephyr)
 
 Synced clean. New memo: xian felt my 09-27 triangulation answer was too sparse and too narrow — his actual question
