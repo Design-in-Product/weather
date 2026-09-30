@@ -34,8 +34,13 @@ SOURCES_CONFIG = [
     {
         "key": "palo_alto_estimate",
         "name": "Palo Alto",
-        "station_id": None,  # computed from SJ + RWC below
+        "station_id": None,  # rain: computed from SJ + RWC below
         "note": "Weighted estimate: (2·San Jose + Redwood City) / 3",
+        # Temperature: a direct KPAO reading beats an estimate once a real
+        # station sits in Palo Alto itself — ratified 2026-09-29. KPAO has
+        # no usable precip data (checked directly), so rain keeps the
+        # weighted estimate above; only this note+source differ for temp.
+        "temp_note": "Station PAO (Palo Alto Airport)",
     },
     {
         "key": "redwood_city",
@@ -70,6 +75,15 @@ IEM_MAPPING = {
     # Redwood City (USC00047339) is a COOP station — no IEM equivalent.
 }
 
+# Palo Alto's temperature-only IEM station (KPAO), ratified 2026-09-29.
+# Deliberately not in IEM_MAPPING above: that mapping gap-fills an
+# NCEI-fetched *rain* baseline for san_jose/sfo, which doesn't apply here —
+# no NCEI archival data exists for KPAO under either cross-referenced ID
+# (checked directly), but IEM alone has complete daily coverage back to
+# 1984, so it's fetched standalone. Not usable for rain: its precip field
+# is unpopulated in every response.
+PALO_ALTO_TEMP_STATION = {"icao": "PAO", "network": "CA_ASOS"}
+
 
 def compute_palo_alto_estimate(sj_records: list[dict],
                                 rwc_records: list[dict]) -> list[dict]:
@@ -92,35 +106,6 @@ def compute_palo_alto_estimate(sj_records: list[dict],
         else:
             v = rwc  # type: ignore[assignment]
         estimate.append({"date": d, "precipitation_in": round(v, 3)})
-    return estimate
-
-
-def compute_palo_alto_temp_estimate(sj_records: list[dict],
-                                     rwc_records: list[dict]) -> list[dict]:
-    """Combine San Jose and Redwood City temperature records into the PA estimate.
-
-    Same (2*SJ + RWC)/3 weighting as the rainfall estimate, applied
-    independently to tmax_f and tmin_f. Falls back to whichever single
-    station has a reading for a given field/date.
-    """
-    sj_map = {r["date"]: r for r in sj_records}
-    rwc_map = {r["date"]: r for r in rwc_records}
-    all_dates = sorted(set(sj_map) | set(rwc_map))
-    estimate: list[dict] = []
-    for d in all_dates:
-        sj = sj_map.get(d, {})
-        rwc = rwc_map.get(d, {})
-        row: dict = {"date": d}
-        for field in ("tmax_f", "tmin_f"):
-            sj_v = sj.get(field)
-            rwc_v = rwc.get(field)
-            if sj_v is not None and rwc_v is not None:
-                row[field] = round((2 * sj_v + rwc_v) / 3, 1)
-            elif sj_v is not None:
-                row[field] = sj_v
-            else:
-                row[field] = rwc_v
-        estimate.append(row)
     return estimate
 
 
@@ -220,7 +205,9 @@ def main() -> None:
             "prior_monthly": prior["rain"].get(src["key"], {}),
         })
 
-    # Temperature: same fetch → IEM gap-fill → PA-estimate pipeline as rain.
+    # Temperature: San Jose, Redwood City, SFO use the same NCEI+IEM
+    # gap-fill pattern as rain. Palo Alto is handled separately below —
+    # a direct KPAO reading, not a weighted estimate of these three.
     fetched_temp: dict[str, list[dict]] = {}
     for src in SOURCES_CONFIG:
         sid = src["station_id"]
@@ -247,13 +234,17 @@ def main() -> None:
         if added:
             print(f"  +{added} day(s) from IEM", file=sys.stderr)
 
-    pa_temp_estimate = compute_palo_alto_temp_estimate(
-        fetched_temp.get("san_jose", []),
-        fetched_temp.get("redwood_city", []),
+    # Palo Alto temperature: a direct KPAO reading, not the SJ/RWC weighted
+    # estimate — ratified 2026-09-29. No NCEI baseline exists for it, so
+    # this is IEM-only (unlike the NCEI+gap-fill pattern above).
+    print("Fetching Palo Alto temperature from IEM (KPAO/PAO)...", file=sys.stderr)
+    palo_alto_temp = fetch_temperature_iem(
+        PALO_ALTO_TEMP_STATION["icao"], PALO_ALTO_TEMP_STATION["network"],
+        season_start, today,
     )
 
     temp_records_by_key: dict[str, list[dict]] = {
-        "palo_alto_estimate": pa_temp_estimate,
+        "palo_alto_estimate": palo_alto_temp,
         **fetched_temp,
     }
 
@@ -262,7 +253,7 @@ def main() -> None:
         temp_sources.append({
             "key": src["key"],
             "name": src["name"],
-            "note": src["note"],
+            "note": src.get("temp_note", src["note"]),
             "records": temp_records_by_key.get(src["key"], []),
             "prior_monthly": prior["temp"].get(src["key"], {}),
         })

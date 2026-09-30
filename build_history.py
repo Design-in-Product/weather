@@ -22,12 +22,13 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
-from build_site import (
-    SOURCES_CONFIG,
-    compute_palo_alto_estimate,
-    compute_palo_alto_temp_estimate,
+from build_site import PALO_ALTO_TEMP_STATION, SOURCES_CONFIG, compute_palo_alto_estimate
+from noaa_rainfall import (
+    _rain_season_start,
+    fetch_rainfall,
+    fetch_temperature,
+    fetch_temperature_iem,
 )
-from noaa_rainfall import _rain_season_start, fetch_rainfall, fetch_temperature
 
 REPO_DIR = Path(__file__).parent
 HISTORY_DIR = REPO_DIR / "history"
@@ -54,8 +55,15 @@ def build_history_for_season(season_start: date, season_end: date) -> dict:
 
     rain["palo_alto_estimate"] = compute_palo_alto_estimate(
         rain.get("san_jose", []), rain.get("redwood_city", []))
-    temp["palo_alto_estimate"] = compute_palo_alto_temp_estimate(
-        temp.get("san_jose", []), temp.get("redwood_city", []))
+
+    # Temperature: direct KPAO reading, matching build_site.py's live
+    # pipeline, so the year-over-year overlay compares like-for-like.
+    print(f"Fetching Palo Alto temperature (KPAO/PAO) {season_start} -> {season_end}...",
+          file=sys.stderr)
+    temp["palo_alto_estimate"] = fetch_temperature_iem(
+        PALO_ALTO_TEMP_STATION["icao"], PALO_ALTO_TEMP_STATION["network"],
+        season_start, season_end,
+    )
 
     return {
         "season_start": season_start.isoformat(),
