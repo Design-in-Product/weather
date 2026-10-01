@@ -4,6 +4,51 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-01 — Two real bugs from Pard; both fixed, one design question left for xian (Zephyr)
+
+Synced clean (rain season also rolled over automatically today — Oct 2025–Sep 2026 → Oct 2026–Sep 2027 — confirmed
+via `_rain_season_start()`, no code change needed, season totals correctly reset to near-zero on build). New mail,
+first time from a new sender: **Pard** ("infra lead on Amber"), cc xian and Janus —
+`docs/mail/pard-to-zephyr-cc-xian-janus-todays-high-is-the-high-so-far-and-the-updated-stamp-is-utc-2026-09-30.md`.
+xian saw 72° labeled "Daily high" when the actual high that day reached the 80s. Pard investigated thoroughly
+before writing in: queried IEM directly (ruled out a KPAO data problem — the station was reporting correctly),
+read the workflow triggers, read `build_site.py:261`. Two real, precisely-located defects, both fixed and deployed
+this fire (`ea89a26`):
+
+1. **"Today's high" was the high-so-far at build time, presented as final.** Introduced by my 09-28 hero change
+   (`f398a32`) — before that the hero didn't depend on the current day being complete. The build runs once daily
+   (~7am Pacific via cron, no push trigger), so on a normal day the number shown is essentially an overnight
+   reading that never updates — true when fetched, wrong by afternoon, with no label saying so. Pard offered three
+   framings (show yesterday instead / relabel / build more often) and recommended the relabel as the smallest
+   honest fix, explicitly leaving the bigger call to xian. Took that recommendation: the hero's label is now
+   conditional — "High so far today" when the latest reading is today's (incomplete by construction), "Daily high"
+   when it's a complete prior day. Did **not** touch build cadence or add a push trigger — that's still open and
+   is xian's call, not mine to make unilaterally.
+2. **The "Updated" footer timestamp was UTC rendered as if it were already Pacific — 7 hours fast.** Unambiguous
+   bug, no judgment call: `generated_at = datetime.now()` was naive, evaluated on a UTC GitHub Actions runner. Fixed
+   outright to `datetime.now(ZoneInfo("America/Los_Angeles"))`, and added `%Z` to the footer's format string so the
+   displayed zone is explicit from now on (reads "...PDT" / "...PST") rather than silently drifting wrong the same
+   way again.
+
+**Verified:** full `build_site.py` run (confirmed footer now matches actual wall-clock Pacific time, "PDT" suffix
+correct for today's DST state); checked all four temperature sections' hero label — three correctly say "High so
+far today" (today's KPAO/SJ/SFO readings), Redwood City correctly falls back to "No temperature data recorded this
+season" (RWC has no IEM equivalent, so day-1-of-season has nothing from NCEI yet — expected, not a new issue);
+`node --check` on the extracted script; existing CLI smoke test (confirmed the season rollover didn't break the
+default-date path, independent of the mistaken literal `--end` date I first tried out of habit from testing
+against the old season). Manually triggered the deploy and confirmed both fixes live.
+
+Replied to Pard (cc xian, Janus), confirming both fixes and explicitly leaving the build-cadence/label/show-
+yesterday tradeoff open for xian:
+`docs/mail/zephyr-to-pard-cc-xian-janus-both-defects-fixed-build-cadence-still-open-2026-10-01.md`.
+
+Also: today being the season rollover, the prior season (Oct 2025–Sep 2026) is now complete. Once NCEI/IEM have
+fully ingested it (give it a few days past Sep 30), `build_history.py` should be re-run to freeze
+`history/2025-2026.json` so next year's comparison bar has it — the file currently frozen (`2024-2025.json`) is
+now two seasons back from the live one, not one, until that happens.
+
+---
+
 ## 2026-09-30 — KPAO shipped for Palo Alto temperature (Zephyr)
 
 Synced clean. New memo: xian's go-ahead —
