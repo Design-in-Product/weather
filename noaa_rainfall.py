@@ -879,12 +879,22 @@ def _render_temp_section(source: dict, season_start: date, today: date,
 
     # Hero: today's (or most recent) high/low — ratified 2026-09-27, was
     # previously "season avg high"; that stat is now the secondary card below.
+    #
+    # When the latest reading IS today, it's necessarily incomplete — the
+    # build runs once daily (usually ~7am Pacific), so "today's high" is
+    # really "today's high so far" and can rise later. Label it honestly
+    # rather than presenting a partial number as a final one (bug caught
+    # by Pard 2026-09-30: xian saw 72° labeled "Daily high" when the actual
+    # high that day was in the 80s — the number was correct when fetched,
+    # just mid-morning, and the label didn't say so).
     latest = summary["latest"]
+    hero_label = "Daily high"
     if latest:
         latest_dt = datetime.strptime(latest["date"], "%Y-%m-%d")
         days_since = (today - latest_dt.date()).days
         if days_since == 0:
             ago_lbl = "today"
+            hero_label = "High so far today"
         elif days_since == 1:
             ago_lbl = "yesterday"
         else:
@@ -940,7 +950,7 @@ def _render_temp_section(source: dict, season_start: date, today: date,
         f'<section class="source-section temp-section{active_cls}" data-metric="temperature" data-source="{source["key"]}">'
         '<div class="card hero temp-hero">'
         f'<div><span class="number">{hi_str}</span><span class="unit">°F</span></div>'
-        '<div class="label">Daily high</div>'
+        f'<div class="label">{hero_label}</div>'
         f'<div class="meta">{hero_meta}</div>'
         f'{note_html}'
         '</div>'
@@ -1010,7 +1020,7 @@ def render_html(sources: list[dict], season_start: date, season_end: date,
 
     sections_html = rain_sections_html + temp_sections_html
 
-    generated_str = generated_at.strftime("%b %-d, %Y at %-I:%M %p")
+    generated_str = generated_at.strftime("%b %-d, %Y at %-I:%M %p %Z")
     data_note = (
         "Data: NOAA NCEI + <a href=\"https://mesonet.agron.iastate.edu/\">Iowa "
         "Environmental Mesonet</a> (precipitation & temperature)"

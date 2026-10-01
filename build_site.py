@@ -16,6 +16,7 @@ import shutil
 import sys
 from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from noaa_rainfall import (
     _rain_season_start,
@@ -258,7 +259,11 @@ def main() -> None:
             "prior_monthly": prior["temp"].get(src["key"], {}),
         })
 
-    generated_at = datetime.now()
+    # Rendered as a local-looking timestamp in the footer; must be Pacific
+    # explicitly since the GitHub Actions runner that builds this is UTC
+    # (bug caught by Pard 2026-09-30 — naive datetime.now() was rendering
+    # UTC as if it were already Pacific, 7 hours fast).
+    generated_at = datetime.now(ZoneInfo("America/Los_Angeles"))
 
     html = render_html(
         sources=sources,
