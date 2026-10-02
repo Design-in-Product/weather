@@ -4,6 +4,19 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-02 — No-op fire (Zephyr)
+
+Synced clean (ff-only, picked up the 2026-10-02 cross-pollination brief). No new mail — everything in `docs/mail/`
+is already answered or shipped. Live site 200, footer correctly reads a Pacific timestamp with `PDT` suffix
+(confirms yesterday's timezone fix held through today's scheduled build, not just the one I triggered manually).
+Nothing to change.
+
+Still open, for continuity: the build-cadence/label tradeoff from Pard's report is waiting on xian; the
+`history/2025-2026.json` freeze (once NCEI/IEM fully ingest the season that ended Sep 30) hasn't been done yet —
+not due for a few more days.
+
+---
+
 ## 2026-10-01 — Two real bugs from Pard; both fixed, one design question left for xian (Zephyr)
 
 Synced clean (rain season also rolled over automatically today — Oct 2025–Sep 2026 → Oct 2026–Sep 2027 — confirmed
