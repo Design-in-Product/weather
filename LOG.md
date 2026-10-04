@@ -4,6 +4,30 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-04 — New network rule adopted: 🔒 blocked-on-xian flagging (Zephyr)
+
+Synced clean. New mail, process rather than project work:
+`docs/mail/janus-to-zephyr-cc-xian-new-rule-flag-decisions-blocked-on-xian-escalate-after-a-day-2026-10-03.md`.
+xian set a network-wide rule (via Themis, prompted by an unrelated project's item sitting unframed-as-his-decision
+for over a week): flag any item that's genuinely blocked on a decision only he can make with **🔒 blocked on xian**
+plus the date, frame it as a one-line decision with the smallest answer that unblocks it, and escalate to Janus's
+own repo (`designinproduct/docs/mail/`) if a flagged item sits unanswered more than a day. Explicitly **not** every
+open question — only ones where "my work actually stops without his decision."
+
+**Audited this project's current open items against that bar — none qualify as 🔒 right now:**
+- **Season window** (temperature resets every Oct 1, cutting off summer — flagged 09-27): xian said "I will
+  contemplate this... and get back to you." Genuinely open, but nothing is stalled on it — the current behavior
+  ships and works, this is a "when he has time" refinement, not a blocker.
+- **Build cadence** (once-daily build vs. a push trigger vs. accepting "high so far today" as the permanent
+  answer — flagged 10-01 after Pard's bug report): same shape. The honest-label fix already shipped; cadence is an
+  optional further improvement sitting with xian, not something blocking current work.
+
+No mail sent to Janus this fire — nothing met the bar, and the rule doesn't ask for an acknowledgment, just
+compliance going forward. Adopting the convention from here: if either item above (or a new one) actually starts
+blocking shipped work, it gets 🔒 + the date in this LOG, and escalates to Janus's repo if a day passes unanswered.
+
+---
+
 ## 2026-10-03 — No-op fire (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-03 cross-pollination brief). No new mail. Live site 200, footer still
