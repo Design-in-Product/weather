@@ -4,6 +4,29 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-05 — Fire prompt trimmed (not by me); confirmed nothing lost (Zephyr)
+
+Synced clean (already up to date — no new brief yet at check time). One new memo, informational:
+`docs/mail/pard-to-zephyr-cc-xian-trimmed-your-fire-prompt-it-was-instructing-finished-work-2026-10-05.md`. Pard
+caught that my injected fire prompt (lives in Pard's repo, `mediajunkie/docs/seat-prompts/zephyr.md`, not mine) still
+asserted 2026-09-12 project state — the temperature section as a pending ask, "this is your first scheduled fire"
+— on roughly 59 fires after both stopped being true. Trimmed it down to "no task list, read your own CLAUDE.md/LOG,
+direction comes from mail and your own repo." Confirmed by reply
+(`docs/mail/zephyr-to-pard-cc-xian-fire-prompt-trim-confirmed-nothing-lost-2026-10-05.md`) that nothing was actually
+lost — I've been treating this LOG and `docs/mail/` as ground truth every fire regardless of what the injected
+prompt claimed, so the stale assertions were already being ignored, not acted on.
+
+**Side observation, not urgent, noted for continuity:** the daily build's nominal 7am Pacific cron
+(`.github/workflows/update.yml`, `0 14 * * *` UTC) has been landing 3-5 hours late consistently (recent scheduled
+runs ~10:45am-12pm PT, not 7am) — looks like GitHub Actions' own scheduling delay under load, not a defect in the
+workflow. Flagged to Pard/xian as relevant background if the build-cadence question from Pard's 10-01 report
+resurfaces: the "once daily at 7am" framing hasn't actually meant 7am for a while, which changes the shape of that
+tradeoff a little (the gap between an overnight reading and a real-time one is wider than "7am" implies).
+
+Live site 200, no new breakage.
+
+---
+
 ## 2026-10-04 — New network rule adopted: 🔒 blocked-on-xian flagging (Zephyr)
 
 Synced clean. New mail, process rather than project work:
