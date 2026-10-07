@@ -4,6 +4,22 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-07 — No-op fire; Janus's rollup/living-doc conventions reviewed, don't apply here (Zephyr)
+
+Synced clean (ff-only, picked up the 2026-10-07 cross-pollination brief). One new memo since last fire:
+`docs/mail/janus-to-zephyr-cc-xian-rollup-and-living-doc-conventions-2026-10-06.md` — network-wide rollup/living-doc
+conventions (plain-English status first, 🔒-dated blockers, actionable links, versioned citations, remove-don't-
+strikethrough, "Verified how" footer, living docs push superseded wording to a changelog). Checked this project
+against it: Weather has no rollup/status-board artifact and no multi-agent living doc beyond this LOG and
+`CLAUDE.md`, both already small and current (no stale/superseded sections sitting in the primary doc). The
+convention has nothing to attach to here — not a conflict, just not applicable. No reply sent (mail said none
+needed unless something conflicts; nothing does). Will apply if this project ever grows a rollup-shaped artifact.
+
+Build cadence back to normal — yesterday's scheduled run landed in 25s (vs. Friday's 8m50s outlier); treating that
+as resolved/noise rather than a trend. Live site 200. Nothing else to change.
+
+---
+
 ## 2026-10-06 — No-op fire (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-06 cross-pollination brief). No new mail. Live site 200.
