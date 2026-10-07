@@ -865,7 +865,7 @@ def _compute_temp_summary(records: list[dict], today: date) -> dict:
 
 
 def _render_temp_section(source: dict, season_start: date, today: date,
-                          is_default: bool) -> str:
+                          is_default: bool, generated_at: datetime) -> str:
     """Render one <section> for a single source/station's temperature."""
     summary = _compute_temp_summary(source["records"], today)
     active_cls = " active" if is_default else ""
@@ -892,16 +892,19 @@ def _render_temp_section(source: dict, season_start: date, today: date,
     if latest:
         latest_dt = datetime.strptime(latest["date"], "%Y-%m-%d")
         days_since = (today - latest_dt.date()).days
-        if days_since == 0:
-            ago_lbl = "today"
-            hero_label = "High so far today"
-        elif days_since == 1:
-            ago_lbl = "yesterday"
-        else:
-            ago_lbl = f"{days_since} days ago"
         hi_str = f'{latest["tmax_f"]:.0f}' if latest.get("tmax_f") is not None else "–"
         lo_str = f'{latest["tmin_f"]:.0f}°' if latest.get("tmin_f") is not None else "–"
-        hero_meta = f'{ago_lbl.capitalize()} · low {lo_str}'
+        if days_since == 0:
+            hero_label = "High so far today"
+            # Frozen at build time (once-daily cron, no intraday refresh),
+            # so it reads as "wrong" by afternoon on a warming day. Stamping
+            # the time makes that obvious without a trip to the footer.
+            build_time = generated_at.strftime("%-I:%M %p")
+            hero_meta = f'As of {build_time} today · low {lo_str}'
+        elif days_since == 1:
+            hero_meta = f'Yesterday (final) · low {lo_str}'
+        else:
+            hero_meta = f'{days_since} days ago (final) · low {lo_str}'
     else:
         hi_str = "–"
         hero_meta = "No temperature data recorded this season"
@@ -1014,7 +1017,8 @@ def render_html(sources: list[dict], season_start: date, season_end: date,
         )
         # Metric defaults to "rain" on load, so no temperature section starts active.
         temp_sections_html = "".join(
-            _render_temp_section(s, season_start, season_end, is_default=False)
+            _render_temp_section(s, season_start, season_end, is_default=False,
+                                  generated_at=generated_at)
             for s in temp_sources
         )
 

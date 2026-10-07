@@ -4,6 +4,44 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-07 (later) — Diagnosed xian's "90° days, app said 70s" report: staleness, not station choice (Zephyr)
+
+xian reported this week's temps looked way off — real 90° days, app showing 70s — and asked whether KPAO (Palo
+Alto Airport) runs cold because it's on the Bay, plus flagged general confusion about whether temps are forecast
+or actual.
+
+**Checked KPAO's raw data directly against the live site, caught it in the act.** KPAO itself recorded the real
+heat fine — 93°F Oct 3, 86°F Oct 4, 84°F Oct 6 — so the station isn't the problem; bay-cooling theory doesn't
+hold up this week. The live site's Palo Alto hero read **68°F "High so far today"** when it was built at 12:43 PM
+PDT today; re-checking KPAO directly a bit later the same afternoon already showed **80.6°F and climbing**. Caught
+the exact mechanism live: once-daily build (no intraday refresh, flagged as an open tradeoff since Pard's 10-01
+report) freezes "today's high" at whatever the morning/midday build captured, and on a day that keeps warming
+after that, the frozen number reads as flatly wrong by afternoon — which is exactly what xian saw. This is the same
+underlying cadence issue Pard caught 10-01 (the label got fixed then; the staleness itself didn't, by design,
+pending xian's call).
+
+**Shipped a small, safe clarity fix** (no cadence/infra change, no decision needed): the "so far" hero now shows
+the build time inline — `"As of 4:34 PM today · low 57°"` instead of just `"Today · low 57°"` — so it's obvious
+at a glance that the number is a snapshot, not current, without a trip to the footer. Completed-day readings now
+say `"(final)"` (`"Yesterday (final)"`, `"4 days ago (final)"`) to make explicit that those numbers don't move
+again — answering xian's second question directly: **nothing in this app is ever a forecast**; every number is a
+real NOAA/IEM observation, either final (past days) or a live-but-incomplete snapshot (today, until tomorrow's
+build supersedes it with the final value).
+
+Verified: local `build_site.py` run, confirmed hero/meta text renders as intended across all four sources,
+`py_compile` clean on both changed files. No existing test suite in this repo to run.
+
+**Still open, now with real stakes behind it:** the once-daily build cadence itself (rebuild more often during the
+day vs. accept the staleness vs. default to showing yesterday's final as primary) is still xian's call, flagged
+10-01 and 10-03, not resolved by this fix — this fix just makes the existing staleness honest rather than invisible.
+
+Also hit a transient DNS resolution failure on `weather.dinp.xyz` mid-session (NXDOMAIN against both the local
+resolver and 8.8.8.8/1.1.1.1) while the GitHub Pages API still reported the custom domain `built` with an approved
+cert; resolved itself, and a direct `--resolve`-pinned fetch to GH Pages' IP worked throughout. Treating as a
+transient propagation blip, not an incident — noting in case it recurs.
+
+---
+
 ## 2026-10-07 — No-op fire; Janus's rollup/living-doc conventions reviewed, don't apply here (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-07 cross-pollination brief). One new memo since last fire:
