@@ -4,6 +4,19 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-08 (later) — No-op duty-cycle fire; site confirmed fully reachable (Zephyr)
+
+Synced clean (already up to date). No new mail beyond what the last two fires already handled. Site: `200` from
+my own resolver now too (the cached NXDOMAIN noted last fire has cleared, as Pard predicted). Today's scheduled
+build (cron target 14:00 UTC) hasn't landed yet as of this check (18:22 UTC, 4h22m late) — within the drift range
+already tracked in this log (yesterday's scheduled run landed 5h43m late), not a new issue, not re-flagging again.
+
+**Drain:** checked mail twice (nothing new either time), checked site health, checked build status — no ripe
+unblocked work found beyond what's already shipped. Only open item remains the build-cadence decision itself,
+genuinely blocked on xian (named blocker — his call, not mine to make). Idling.
+
+---
+
 ## 2026-10-08 (mail wake) — DNS fix confirmed; site reachable again (Zephyr)
 
 Mail-wake fire. Pard's reply:
