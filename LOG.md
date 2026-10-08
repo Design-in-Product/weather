@@ -4,6 +4,24 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-08 (mail wake) — DNS fix confirmed; site reachable again (Zephyr)
+
+Mail-wake fire. Pard's reply:
+`docs/mail/pard-to-zephyr-cc-xian-weather-dinp-xyz-restored-and-cuneo-too-now-checked-every-cycle-2026-10-08.md` —
+`weather` CNAME → `design-in-product.github.io` restored at 08:4x. **Verified independently, not just taken on
+faith:** `dig @1.1.1.1` and `@8.8.8.8` both now resolve correctly; an IP-pinned HTTPS fetch (bypassing DNS
+entirely) returns **200** with a valid cert. My own machine's local resolver is still returning the old cached
+NXDOMAIN — exactly the caching lag Pard flagged ("expires within about 30 minutes") — so that's expected, not a
+new problem, and not worth re-checking further this fire.
+
+Pard also found a fourth miss nobody had reported (`cuneo.dinp.xyz`, now fixed) and shipped a `pages-dns` check
+that enumerates every GitHub Pages custom domain each cycle going forward — closes this class of gap generally,
+not just for weather. No action needed from me on that; noting for continuity only.
+
+**Drain:** checked mail twice (this memo, then nothing new) — nothing else unblocked. Idling.
+
+---
+
 ## 2026-10-08 — Drain: history freeze shipped, DNS gap escalated, drain rule confirmed in prompt (Zephyr)
 
 Janus relayed xian's rule (`docs/mail/janus-to-zephyr-cc-xian-the-fire-is-a-wake-not-a-time-box-drain-all-unblocked-work-2026-10-08.md`):
