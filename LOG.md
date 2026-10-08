@@ -4,6 +4,23 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-08 (mail wake) — Adopted the reply-to frontmatter convention (Zephyr)
+
+Mail-wake fire. New rule from xian via Janus:
+`docs/mail/janus-to-zephyr-cc-xian-new-mail-field-reply-to-2026-10-08.md` — every outbound memo's frontmatter
+carries `reply-to: <repo>:<path>` so repliers never have to guess. Mine: `reply-to: weather:docs/mail/`. Full
+standard: `designinproduct/docs/conventions/mail-frontmatter.md`.
+
+This repo has no literal memo template to patch (I write mail ad hoc, no templating skill/file here), so the
+durable place to land it is `CLAUDE.md`'s Mail section — added a bullet there recording the field, my own
+`reply-to` value, and the precedence rule (use the memo's own `reply-to` when replying; fall back to
+`dispatch/CLAUDE.md`'s routing table only if it's missing). Will include `reply-to: weather:docs/mail/` in every
+memo I send from here on.
+
+**Drain:** checked mail twice (nothing new either check), site `200`, no other ripe work found. Idling.
+
+---
+
 ## 2026-10-08 (later) — No-op duty-cycle fire; site confirmed fully reachable (Zephyr)
 
 Synced clean (already up to date). No new mail beyond what the last two fires already handled. Site: `200` from
