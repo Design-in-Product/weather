@@ -4,6 +4,47 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-08 — Drain: history freeze shipped, DNS gap escalated, drain rule confirmed in prompt (Zephyr)
+
+Janus relayed xian's rule (`docs/mail/janus-to-zephyr-cc-xian-the-fire-is-a-wake-not-a-time-box-drain-all-unblocked-work-2026-10-08.md`):
+every fire drains all unblocked work after the checklist, idling only after two clean checks; deferrals need a
+named blocker, not a timebox; every entry carries a `Drain:` line. Full convention:
+`designinproduct/docs/conventions/duty-cycle-drain.md`.
+
+**Cycle prompt:** already done, not by me — Pard applied the drain clause to my seat prompt
+(`mediajunkie/docs/seat-prompts/zephyr.md`, commit `d04a76a`, same morning) before I got to it this fire. Verified
+the live file carries it. Nothing left for me to add there.
+
+**Pre-commit guard:** Janus suggested copying `scripts/check-pulse-drain.mjs` from designinproduct. This repo has
+no JS tooling at all (pure Python, no `package.json`, no existing hooks) — importing one `.mjs` guard just for
+this would be exactly the kind of extra machinery this project's Gall's-Law stance has avoided everywhere else.
+Named blocker: no JS tooling to hang it on. Deferred, not skipped — if that changes, revisit.
+
+**Drain:**
+1. **Checked for ripe unblocked work beyond the mail checklist** — found two: the `history/2025-2026.json`
+   freeze (season ended Sep 30, flagged "not due yet" on 10-01/10-02/10-03, never revisited since) and a DNS gap
+   (below). Did both now rather than deferring either.
+2. **Froze `history/2025-2026.json`.** Ran `build_history.py`, verified 365/365 days, zero missing `tmax` across
+   all four sources, correct season boundaries. Confirmed `build_site.py` picks it up (year-over-year overlay
+   renders — `faint = last season` present in a local build). Committed.
+3. **Escalated a live DNS gap — xian/Pard's call, not mine (no Cloudflare access).** Yesterday's "transient" DNS
+   blip on `weather.dinp.xyz` (noted in the 10-07 entry below) is not transient — still NXDOMAIN today against
+   8.8.8.8/1.1.1.1/9.9.9.9, while GitHub Pages' API still reports the custom domain `built` with an approved cert.
+   Today's cross-pollination brief explained why: a Hover→Cloudflare DNS migration missed `globe.dinp.xyz` and
+   `atlas.dinp.xyz` (Pard's fix, `mediajunkie/mediajunkie` mail, 10-07), and Pard explicitly flagged that a probe
+   of likely names "can't prove nothing else is missing." It missed a third: this one. Mailed Pard (cc xian) with
+   the exact fix (`weather` CNAME → `design-in-product.github.io`, same pattern as globe/atlas) —
+   `mediajunkie/docs/mail/zephyr-to-pard-cc-xian-weather-dinp-xyz-is-also-nxdomain-third-cloudflare-import-miss-2026-10-08.md`.
+   Also flagged, same memo: `dispatch/CLAUDE.md`'s mail-routing table still lists my address as the old
+   `docs/inbox/` convention, not `docs/mail/` (changed 2026-09-26) — minor, not urgent.
+4. **Re-checked mail twice, both clean.** No other items addressed to Zephyr beyond the drain-rule memo itself and
+   the already-actioned 10-06 rollup-conventions memo. Idling.
+
+Live site itself is down for real visitors right now (not a build problem — the GitHub Pages deploy is fine, DNS
+just isn't routing to it) until Pard (or xian) adds the CNAME record. Nothing further I can do on that from here.
+
+---
+
 ## 2026-10-07 (later) — Diagnosed xian's "90° days, app said 70s" report: staleness, not station choice (Zephyr)
 
 xian reported this week's temps looked way off — real 90° days, app showing 70s — and asked whether KPAO (Palo
