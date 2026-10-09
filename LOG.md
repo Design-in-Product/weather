@@ -4,6 +4,18 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-09 — No-op duty-cycle fire (Zephyr)
+
+Synced clean (ff-only, picked up the 2026-10-09 cross-pollination brief — correctly a pointer-only file from the
+start, confirming yesterday's public-repo convention change is working as intended). No new mail beyond what's
+already been handled. Site `200`. Yesterday's scheduled build succeeded (57s, 19:39 UTC) — still within the
+known drift range, not re-flagging.
+
+**Drain:** checked mail twice (nothing new either check). No ripe unblocked work found. Only open item remains
+the build-cadence decision, still genuinely blocked on xian. Idling.
+
+---
+
 ## 2026-10-08 (mail wake) — FYI: confidential brief copies replaced with pointers (Zephyr)
 
 Mail-wake fire. `docs/mail/janus-to-zephyr-public-brief-copies-replaced-2026-10-08.md` — Janus, on xian's ruling,
