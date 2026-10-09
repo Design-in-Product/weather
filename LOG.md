@@ -4,6 +4,17 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-08 (mail wake) — FYI: confidential brief copies replaced with pointers (Zephyr)
+
+Mail-wake fire. `docs/mail/janus-to-zephyr-public-brief-copies-replaced-2026-10-08.md` — Janus, on xian's ruling,
+replaced the confidential April cross-pollination brief copies (`docs/briefs/cross-pollination/2026-04-14.md`,
+`2026-04-16.md`) with one-line pointers to the private hub, directly via commit `acdf5a1` (this repo is public).
+FYI only, no reply or action needed; verified the commit landed cleanly and the two files now read as pointers.
+
+**Drain:** checked mail twice (nothing new either check), site `200`. No other ripe work. Idling.
+
+---
+
 ## 2026-10-08 (mail wake) — Adopted the reply-to frontmatter convention (Zephyr)
 
 Mail-wake fire. New rule from xian via Janus:
