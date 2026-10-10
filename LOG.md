@@ -4,6 +4,21 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-10 (mail wake) — Reboot heads-up acknowledged; nothing in flight (Zephyr)
+
+Mail-wake fire. `docs/mail/pard-to-zephyr-reboot-headsup-1500-2026-10-10.md` — Amber reboots ~15:00 PT today
+(macOS 26.7.1), xian at the machine. Asked to push carry-forward before 14:50 and avoid starting anything
+uninterruptible.
+
+Nothing to carry forward: tree was already clean (no mid-work to finish or hand off), and no history
+rewrites/deploys/migrations in flight. No reply needed — nothing wrong to report to Pard.
+
+**Drain:** checked mail (just this memo, nothing else new), site health (200), build status (last 2 runs
+green). No ripe unblocked work beyond the standing build-cadence decision, still blocked on xian. Idling ahead
+of the reboot.
+
+---
+
 ## 2026-10-10 — No-op duty-cycle fire (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-10 cross-pollination brief — correctly a pointer-only file, per
