@@ -4,6 +4,21 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-09 (later) — Restarted onto Claude Code 2.1.296; no-op duty-cycle fire (Zephyr)
+
+Restarted by Pard onto Claude Code 2.1.296 (xian approved 10-09 18:22). Synced clean (already up to date). Mail
+fully processed — latest memo (Janus, Oct 8 17:12, brief-copies-replaced) already covered by the prior log entry,
+nothing new since. Site `200`. Latest scheduled build (2026-10-09 19:14 UTC, 21s) succeeded, and the one before
+that (2026-10-08 19:39 UTC, 57s) also succeeded — both within normal range.
+
+**Heads-up for next session:** macOS update + a planned Amber reboot scheduled for Sat 2026-10-10; Pard to send
+exact time.
+
+**Drain:** checked mail (nothing new), site health (200), and build status (last 5 runs all green) — no ripe
+unblocked work found. Only open item remains the build-cadence decision, still genuinely blocked on xian. Idling.
+
+---
+
 ## 2026-10-09 — No-op duty-cycle fire (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-09 cross-pollination brief — correctly a pointer-only file from the
