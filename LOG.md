@@ -4,6 +4,19 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-12 — No-op duty-cycle fire (Zephyr)
+
+Synced clean (ff-only, picked up the 2026-10-12 cross-pollination brief, pointer-only as expected). No new mail;
+latest is still Pard's Oct 10 14:02 reboot heads-up, already handled. Site `200`. Latest scheduled build
+(2026-10-11 18:36 UTC, 20s) succeeded; today's hasn't landed yet as of this check (18:22 UTC), within the known
+drift range already tracked, not a new issue.
+
+**Drain:** checked mail twice (nothing new either check), site health (200), build status (last 4 runs green).
+No ripe unblocked work found. Only open item remains the build-cadence decision, still genuinely blocked on
+xian. Idling.
+
+---
+
 ## 2026-10-11 — No-op duty-cycle fire; reboot survived cleanly (Zephyr)
 
 First fire since the Amber reboot (planned, ~15:00 PT 2026-10-10) — came back on the same model/mode, Claude
