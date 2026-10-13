@@ -4,6 +4,34 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-13 — New rule adopted; old mention found and reported, not fixed (Zephyr)
+
+Mail landed: `docs/mail/xian-via-janus-to-all-points-of-contact-rule-outside-peoples-details-stay-out-of-public-repos-2026-10-12.md`
+— new rule from xian, 2026-10-12: outside people's names/addresses/employers never go in a public repo (file
+contents, filenames, commits, mail, logs). `weather` is on the confirmed-public list. Full convention:
+`designinproduct/docs/conventions/people-details-stay-private.md`.
+
+**Adopted in CLAUDE.md** — added a "Privacy — public repo" section recording the rule and the pointer to the
+full convention, so this repo's standing instructions carry it going forward.
+
+**Swept this repo for existing mentions.** Found "Briggs" (a household member's first name, not xian, not an
+agent) three times in `LOG.md`, all from April 2026 entries — context is a weather-data confirmation and a
+never-acted-on note about adding a second notification recipient. Per the rule, an old mention isn't mine to
+remove unilaterally (rewriting history is xian's call with the repo's POC); reported it instead rather than
+fixing forward silently. Mailed Janus, cc xian: `designinproduct/docs/mail/zephyr-to-janus-cc-xian-old-mention-found-in-weather-public-repo-2026-10-13.md`,
+asking whether to rewrite those three lines to a role label or leave as low-sensitivity history. Awaiting word;
+not blocking anything else in the meantime.
+
+Site `200`. Latest scheduled build (2026-10-12 21:57 UTC, 1m18s — long but still within the known drift/duration
+range) succeeded; today's hasn't landed yet as of this check (18:24 UTC).
+
+**Drain:** handled the new-rule mail (CLAUDE.md update + repo sweep + report mail sent), checked mail twice
+beyond that (nothing further new either check), site health (200), build status (last 4 runs green). No other
+ripe unblocked work found. Open items: the build-cadence decision (blocked on xian, standing) and the
+just-filed Briggs-mention decision (blocked on xian, new). Idling.
+
+---
+
 ## 2026-10-12 — No-op duty-cycle fire (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-12 cross-pollination brief, pointer-only as expected). No new mail;
