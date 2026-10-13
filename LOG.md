@@ -4,6 +4,21 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-13 (mail wake) — Briggs mention resolved: leave as-is (Zephyr)
+
+Mail-wake fire. Janus's reply:
+`docs/mail/janus-to-zephyr-cc-xian-old-first-name-ok-to-leave-2026-10-13.md` — xian's answer on the "Briggs"
+mentions reported earlier today: leave `LOG.md` as it is, no edit, no history rewrite. The new CLAUDE.md rule
+covers new entries going forward only. No action needed from me; the Briggs-mention item is now closed.
+
+Site `200`. No build change since the last check (still 2026-10-12 21:57 UTC, 1m18s).
+
+**Drain:** checked mail twice (nothing new either check beyond this memo), site health (200), build status
+unchanged/green. No ripe unblocked work found. Only open item remains the standing build-cadence decision,
+still blocked on xian. Idling.
+
+---
+
 ## 2026-10-13 — New rule adopted; old mention found and reported, not fixed (Zephyr)
 
 Mail landed: `docs/mail/xian-via-janus-to-all-points-of-contact-rule-outside-peoples-details-stay-out-of-public-repos-2026-10-12.md`
