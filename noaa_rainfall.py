@@ -36,6 +36,7 @@ from typing import Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from zoneinfo import ZoneInfo
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -281,6 +282,50 @@ def fetch_rainfall_iem(station_icao: str, network: str,
 
     all_records.sort(key=lambda r: r["date"])
     return all_records
+
+
+NWS_API_BASE = "https://api.weather.gov"
+
+
+def fetch_nws_current_observation(icao: str, debug: bool = False) -> Optional[dict]:
+    """Fetch the latest live METAR observation for an ICAO station from the
+    NWS API (free, no auth, CORS-enabled — confirmed via `access-control-
+    allow-origin: *` on the response, which is also what lets the browser-
+    side JS refresh this directly without a backend).
+
+    Returns {"temp_f": float, "observed_at": <aware datetime, UTC>} or None
+    on any failure (station outage, malformed/missing temperature, network
+    error) — this is a supplementary live reading, not an archival source,
+    so a miss here must never break the page; callers fall back to the
+    build-time daily high/low that already exists.
+    """
+    url = f"{NWS_API_BASE}/stations/{icao}/observations/latest"
+    req = Request(url, headers={
+        "Accept": "application/geo+json",
+        "User-Agent": "weather.dinp.xyz (build_site.py)",
+    })
+    try:
+        with urlopen(req, timeout=15) as resp:
+            body = resp.read().decode()
+    except (HTTPError, URLError) as exc:
+        if debug:
+            print(f"DEBUG NWS current-obs error for {icao}: {exc}", file=sys.stderr)
+        return None
+
+    try:
+        data = json.loads(body)
+        props = data["properties"]
+        temp_c = props["temperature"]["value"]
+        observed_at = datetime.fromisoformat(props["timestamp"])
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        if debug:
+            print(f"DEBUG NWS current-obs parse error for {icao}: {exc}", file=sys.stderr)
+        return None
+
+    if temp_c is None:
+        return None
+
+    return {"temp_f": temp_c * 9 / 5 + 32, "observed_at": observed_at}
 
 
 def merge_rainfall_records(primary: list[dict],
@@ -608,6 +653,9 @@ h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
 .temp-section .recent .amount { color: #ea580c; }
 .fill.temp-fill { background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%); }
 .day.temp { background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%); }
+.hero .meta.live-updating { animation: live-pulse 1.4s ease-in-out infinite; }
+.hero .meta .live-fail { color: #b45309; }
+@keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 footer {
   margin-top: 24px;
   font-size: 11px;
@@ -653,6 +701,61 @@ document.querySelectorAll('.src-btn').forEach(btn => {
     updateSections();
   });
 });
+
+// Live current-temperature refresh (ratified 2026-10-15: "the hero is the
+// current temperature"). Each .temp-hero[data-live-icao] was seeded at
+// build time with a real NWS observation; this re-fetches the same free,
+// CORS-enabled endpoint (api.weather.gov) on an interval so the hero
+// stays live between daily builds. A fetch failure (offline, NWS hiccup)
+// leaves the last-known number and timestamp displayed, with a small
+// note — never a blank or broken hero. Refreshes every source's hero
+// regardless of which one is currently shown, so switching the selector
+// never shows stale data mid-session.
+function fetchLiveTemp(hero) {
+  const icao = hero.dataset.liveIcao;
+  if (!icao) return;
+  const numberEl = hero.querySelector('[data-live-number]');
+  const metaEl = hero.querySelector('[data-live-meta]');
+  metaEl.classList.add('live-updating');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  fetch(`https://api.weather.gov/stations/${icao}/observations/latest`, {
+    headers: { Accept: 'application/geo+json' },
+    signal: controller.signal,
+  })
+    .then(r => r.json())
+    .then(data => {
+      const props = data && data.properties;
+      const tempC = props && props.temperature ? props.temperature.value : null;
+      const ts = props ? props.timestamp : null;
+      if (tempC === null || tempC === undefined || !ts) throw new Error('no reading');
+      const tempF = tempC * 9 / 5 + 32;
+      const observed = new Date(ts);
+      const timeStr = observed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      numberEl.textContent = Math.round(tempF);
+      metaEl.textContent = `Live as of ${timeStr}`;
+    })
+    .catch(() => {
+      if (!metaEl.querySelector('.live-fail')) {
+        metaEl.innerHTML += ' <span class="live-fail">(live update failed, retrying)</span>';
+      }
+    })
+    .finally(() => {
+      clearTimeout(timeout);
+      metaEl.classList.remove('live-updating');
+    });
+}
+
+function refreshAllLiveTemps() {
+  document.querySelectorAll('.temp-hero[data-live-icao]').forEach(fetchLiveTemp);
+}
+
+if (document.querySelector('.temp-hero[data-live-icao]')) {
+  setTimeout(refreshAllLiveTemps, 1000);
+  setInterval(() => {
+    if (document.visibilityState === 'visible') refreshAllLiveTemps();
+  }, 10 * 60 * 1000);
+}
 """
 
 
@@ -877,39 +980,84 @@ def _render_temp_section(source: dict, season_start: date, today: date,
     avg_high_str = f"{avg_high:.0f}°" if avg_high is not None else "–"
     avg_low_str = f"{avg_low:.0f}°" if avg_low is not None else "–"
 
-    # Hero: today's (or most recent) high/low — ratified 2026-09-27, was
-    # previously "season avg high"; that stat is now the secondary card below.
-    #
-    # When the latest reading IS today, it's necessarily incomplete — the
-    # build runs once daily (usually ~7am Pacific), so "today's high" is
-    # really "today's high so far" and can rise later. Label it honestly
-    # rather than presenting a partial number as a final one (bug caught
-    # by Pard 2026-09-30: xian saw 72° labeled "Daily high" when the actual
-    # high that day was in the 80s — the number was correct when fetched,
-    # just mid-morning, and the label didn't say so).
+    # Today's high/low so far — was the hero (ratified 2026-09-27), now
+    # demoted to its own "at a glance" card (ratified 2026-10-15: the hero
+    # became the live current reading below). Kept honestly labeled per the
+    # same bug Pard caught 2026-09-30 (a partial number must say it's partial).
     latest = summary["latest"]
-    hero_label = "Daily high"
+    days_since: Optional[int] = None
+    today_label = "Daily high"
     if latest:
         latest_dt = datetime.strptime(latest["date"], "%Y-%m-%d")
         days_since = (today - latest_dt.date()).days
         hi_str = f'{latest["tmax_f"]:.0f}' if latest.get("tmax_f") is not None else "–"
-        lo_str = f'{latest["tmin_f"]:.0f}°' if latest.get("tmin_f") is not None else "–"
+        lo_str = f'{latest["tmin_f"]:.0f}' if latest.get("tmin_f") is not None else "–"
         if days_since == 0:
-            hero_label = "High so far today"
-            # Frozen at build time (once-daily cron, no intraday refresh),
-            # so it reads as "wrong" by afternoon on a warming day. Stamping
-            # the time makes that obvious without a trip to the footer.
-            build_time = generated_at.strftime("%-I:%M %p")
-            hero_meta = f'As of {build_time} today · low {lo_str}'
+            today_label = "High / low so far today"
         elif days_since == 1:
-            hero_meta = f'Yesterday (final) · low {lo_str}'
+            today_label = "Yesterday's high / low (final)"
         else:
-            hero_meta = f'{days_since} days ago (final) · low {lo_str}'
+            today_label = f'High / low, {days_since} days ago (final)'
     else:
         hi_str = "–"
-        hero_meta = "No temperature data recorded this season"
+        lo_str = "–"
+        today_label = "No temperature data recorded this season"
 
-    # Secondary card: season averages (yesterday's hero, now demoted).
+    # "At a glance" card: today's high/low (or most recent final day's),
+    # always shown regardless of whether a live reading exists — ratified
+    # 2026-10-15 per xian's build-cadence answer.
+    today_card_html = (
+        f'<div class="section-title">{today_label}</div>'
+        '<div class="recent">'
+        f'<div class="amount">{hi_str}°<span class="unit"> high</span></div>'
+        f'<div class="amount">{lo_str}°<span class="unit"> low</span></div>'
+        '</div>'
+    )
+
+    # Hero: the live current reading (ratified 2026-10-15, replacing the
+    # daily-high hero above). `live_reading`, when build_site.py supplied
+    # one, is a real METAR observation fetched at build time from the NWS
+    # API for this source's station — the "last best reading" shown
+    # immediately on load. Client-side JS (see _HTML_JS) then re-fetches
+    # the same free, CORS-enabled NWS endpoint on an interval and swaps
+    # this number/timestamp live, no backend involved. A source with no
+    # live station (Redwood City — COOP, not ASOS/METAR) or a build-time
+    # fetch miss falls back to today's high-so-far above, labeled
+    # accordingly — the live piece is additive, never a hard requirement.
+    live_icao = source.get("live_icao")
+    live_reading = source.get("live_reading")
+    live_attrs = ""
+    if live_reading:
+        live_f = live_reading["temp_f"]
+        observed_local = live_reading["observed_at"].astimezone(ZoneInfo("America/Los_Angeles"))
+        observed_str = observed_local.strftime("%-I:%M %p")
+        hero_number = f'{live_f:.0f}'
+        hero_label_text = "Current temperature"
+        hero_meta = f'Live as of {observed_str}'
+        live_attrs = (
+            f' data-live-icao="{live_icao}"'
+            f' data-live-temp-f="{live_f:.1f}"'
+            f' data-live-observed="{live_reading["observed_at"].isoformat()}"'
+        )
+    else:
+        hero_number = hi_str
+        hero_label_text = today_label if not latest else (
+            "High so far today" if days_since == 0 else
+            "Yesterday's high (final)" if days_since == 1 else
+            f'{days_since} days ago (final)'
+        )
+        build_time = generated_at.strftime("%-I:%M %p")
+        hero_meta = (
+            f'As of build ({build_time}) — no live station' if live_icao
+            else f'As of build ({build_time})'
+        ) if latest else "No temperature data recorded this season"
+        if live_icao:
+            # Station configured but today's build-time fetch missed (NWS
+            # outage, etc.) — keep the attribute so client JS still tries.
+            live_attrs = f' data-live-icao="{live_icao}"'
+
+    # Secondary card: season averages (the original hero, 2026-09-27 through
+    # 2026-10-15, now demoted a second time).
     season_avg_html = (
         '<div class="section-title">Season average</div>'
         '<div class="recent">'
@@ -951,12 +1099,13 @@ def _render_temp_section(source: dict, season_start: date, today: date,
 
     return (
         f'<section class="source-section temp-section{active_cls}" data-metric="temperature" data-source="{source["key"]}">'
-        '<div class="card hero temp-hero">'
-        f'<div><span class="number">{hi_str}</span><span class="unit">°F</span></div>'
-        f'<div class="label">{hero_label}</div>'
-        f'<div class="meta">{hero_meta}</div>'
+        f'<div class="card hero temp-hero"{live_attrs}>'
+        f'<div><span class="number" data-live-number="{source["key"]}">{hero_number}</span><span class="unit">°F</span></div>'
+        f'<div class="label">{hero_label_text}</div>'
+        f'<div class="meta" data-live-meta="{source["key"]}">{hero_meta}</div>'
         f'{note_html}'
         '</div>'
+        f'<div class="card">{today_card_html}</div>'
         f'<div class="card">{season_avg_html}</div>'
         '<div class="card">'
         f'<div class="section-title">Monthly avg high (°F){monthly_note}</div>'

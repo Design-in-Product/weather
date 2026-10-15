@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 
 from noaa_rainfall import (
     _rain_season_start,
+    fetch_nws_current_observation,
     fetch_rainfall,
     fetch_rainfall_iem,
     fetch_temperature,
@@ -84,6 +85,18 @@ IEM_MAPPING = {
 # 1984, so it's fetched standalone. Not usable for rain: its precip field
 # is unpopulated in every response.
 PALO_ALTO_TEMP_STATION = {"icao": "PAO", "network": "CA_ASOS"}
+
+# Live current-reading stations for the hero (ratified 2026-10-15, xian's
+# build-cadence answer: "the hero is the current temperature"). NWS uses the
+# K-prefixed ICAO form for the same airports IEM_MAPPING/PALO_ALTO_TEMP_STATION
+# already fetch daily highs/lows from. Redwood City (COOP) has no live
+# ASOS/METAR equivalent, so it's intentionally absent — its hero falls back
+# to today's high-so-far, same as before this feature existed.
+LIVE_TEMP_STATIONS = {
+    "palo_alto_estimate": "KPAO",
+    "san_jose": "KSJC",
+    "sfo": "KSFO",
+}
 
 
 def compute_palo_alto_estimate(sj_records: list[dict],
@@ -251,12 +264,23 @@ def main() -> None:
 
     temp_sources = []
     for src in SOURCES_CONFIG:
+        live_icao = LIVE_TEMP_STATIONS.get(src["key"])
+        live_reading = None
+        if live_icao:
+            print(f"Fetching live current reading for {src['key']} ({live_icao})...",
+                  file=sys.stderr)
+            live_reading = fetch_nws_current_observation(live_icao)
+            if live_reading is None:
+                print(f"  live reading unavailable for {live_icao}, "
+                      "hero falls back to today's high-so-far", file=sys.stderr)
         temp_sources.append({
             "key": src["key"],
             "name": src["name"],
             "note": src.get("temp_note", src["note"]),
             "records": temp_records_by_key.get(src["key"], []),
             "prior_monthly": prior["temp"].get(src["key"], {}),
+            "live_icao": live_icao,
+            "live_reading": live_reading,
         })
 
     # Rendered as a local-looking timestamp in the footer; must be Pacific

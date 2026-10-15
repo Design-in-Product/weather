@@ -99,3 +99,4 @@ Commit the resulting `history/*.json` file. `build_site.py` reads it automatical
 - **Dataset**: GHCN-Daily (`daily-summaries`)
 - **Station**: USC00046646 (Palo Alto, CA)
 - **Variable**: PRCP (daily precipitation in inches)
+- **Live current temperature** (the dashboard's hero, added 2026-10-15): `https://api.weather.gov/stations/{ICAO}/observations/latest` (NWS, public, no auth, CORS-enabled — fetched both at build time and again client-side in the browser). KPAO/KSJC/KSFO have it; Redwood City (COOP) doesn't, so its hero falls back to the daily high-so-far.
