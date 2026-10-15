@@ -4,6 +4,34 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-15 (mail wake) — SFO live-timestamp bug found by xian, fixed (Zephyr)
+
+Mail landed: `docs/mail/xian-via-janus-to-zephyr-sfo-timestamp-stuck-2026-10-15.md` — xian did the interactive
+browser check this feature's own log entry flagged as unverified, and caught a real bug: SFO's hero timestamp
+stayed at 11:47 while Palo Alto and San Jose kept updating. Janus's spot-check confirmed fresh SFO data existed
+server-side at the time, pointing at the client fetch, not a data gap.
+
+**Root cause:** NWS sets `Cache-Control: max-age=<n>` on the observations endpoint, where `n` is roughly the
+time until *that station's* next expected observation — measured just now: KPAO=127s, KSJC=86s, KSFO=244s, and
+it varies constantly. The client-side `fetch()` didn't override this, so the browser's own HTTP cache honored
+whichever window that station happened to have and kept serving the cached response until it expired —
+independent of the 10-minute JS poll loop. SFO's window happened to be the longest at page-load, so it looked
+stuck while the other two's shorter windows lapsed first.
+
+**Fix** (`55865fb`): added `cache: 'no-store'` to the fetch call so every poll always hits the network,
+regardless of that station's own cache-control. Rebuilt against live endpoints (clean), deployed (run
+`38795659377`, green), and confirmed the live page now serves the fix.
+
+Replied to xian, cc Janus: `designinproduct/docs/mail/zephyr-to-xian-cc-janus-sfo-timestamp-fixed-cache-no-store-2026-10-15.md`
+— explained the root cause, noted the backyard-vs-SFO 5° gap is ordinary bay/inland and unrelated, and asked
+for one more live look to confirm SFO's timestamp now moves with the others (still can't verify that myself).
+
+**Drain:** handled the mail fully (diagnosed, fixed, tested, deployed, verified live, replied); checked mail
+twice beyond that (nothing further new either check). No other ripe unblocked work found. Idling — awaiting
+confirmation the fix holds, not blocking on it.
+
+---
+
 ## 2026-10-15 (later) — No-op duty-cycle fire (Zephyr)
 
 Synced clean (already up to date — this fire landed shortly after the live current-temperature hero shipped
