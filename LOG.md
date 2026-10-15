@@ -4,6 +4,62 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-15 — Build-cadence question answered and closed: live current-temperature hero shipped (Zephyr)
+
+Mail landed: `docs/mail/janus-to-zephyr-cc-xian-build-cadence-answer-hero-is-current-temperature-2026-10-15.md`
+— xian's answer to the 10-01 build-cadence question, this morning. **The hero should be the current
+temperature** (refreshing at intervals, honest about staleness and when it's updating), and **today's high/low
+should be visible at a glance** aside from the hero. A forecast-aware high/low and a forecast-vs-actual trend
+are named as later/bonus work. Framing: "feel free to explore, question, countersuggest... no need to settle
+for something wonky."
+
+**Decision: built rather than proposing first.** Verified technical feasibility before writing any code —
+`api.weather.gov`'s latest-observation endpoint is free, no-auth, and confirmed CORS-enabled
+(`access-control-allow-origin: *`), and KPAO/KSJC/KSFO (the same stations already used for daily highs/lows)
+all return live METAR readings. That made this a browser-side fetch problem, not a cron-frequency problem —
+genuinely resolves the long-standing build-cadence item, not just defers it.
+
+**Shipped** (`981855a`):
+- `noaa_rainfall.py`: new `fetch_nws_current_observation(icao)` (non-fatal on any failure, mirrors the existing
+  IEM-is-supplementary pattern). `_render_temp_section` now renders the hero as the live reading when one's
+  available (`data-live-icao`/`data-live-temp-f`/`data-live-observed` baked in at build time as the "last best
+  reading," honestly timestamped), falling back unchanged to the old daily-high-so-far hero when there's no
+  live station (Redwood City — COOP, not ASOS/METAR) or the build-time fetch missed. Today's high/low-so-far
+  (the previous hero) is now its own always-visible card, independent of live-station availability.
+- `_HTML_JS`: client-side `fetchLiveTemp`/`refreshAllLiveTemps` re-fetch the same NWS endpoint directly from
+  the browser on load (1s delay) and every 10 minutes while the tab is visible, swapping the hero number/
+  timestamp with no backend involved. A failed fetch leaves the last-known value up with a small
+  "(update failed, retrying)" note — never a blank hero. Refreshes every source's hero, not just the active
+  one, so switching the selector never shows stale data.
+- `build_site.py`: new `LIVE_TEMP_STATIONS` mapping (KPAO/KSJC/KSFO; Redwood City intentionally absent),
+  fetches each at build time, non-fatally.
+- `README.md`: one-line addition documenting the new live source.
+
+**Verification:** full `build_site.py` run against live NOAA/IEM/NWS endpoints (no mocks) — confirmed correct
+hero/today-card HTML for all 4 sources, correct Pacific-time conversion of the UTC observation timestamp, and
+Redwood City's unchanged fallback. `node --check` on the extracted `<script>` block. HTML tag-balance check
+(sections/divs matched). Existing CLI smoke test (`--station ... --json`) to confirm the rain-only path is
+untouched. Manually triggered the deploy workflow (run `38784345958`, 26s, all green) and confirmed
+`https://weather.dinp.xyz/` serves the live KPAO reading with the correct `data-live-*` attributes.
+
+**Not verified:** interactive browser behavior — the actual fetch/update/fail-gracefully JS running in a real
+tab. Static output and JS syntax only. Worth an eyeball live; the hourly METAR cadence means the visible number
+usually won't change between polls, so the timestamp is the tell that it's working.
+
+**Also explicitly deferred, named reasons:** forecast-aware high/low (needs a second NWS endpoint — point
+forecast — and crossover-display logic) and the forecast-vs-actual trend (needs persisted history alongside
+actuals). Both separate chunks of work, not forgotten.
+
+Mailed Janus, cc xian, documenting all of the above and flagging the one unverified piece:
+`designinproduct/docs/mail/zephyr-to-janus-cc-xian-live-current-temperature-hero-shipped-2026-10-15.md`.
+
+**Drain:** handled the build-cadence mail fully (researched, built, tested, deployed, verified live, reported)
+rather than deferring to a proposal-first round; checked mail twice beyond that (nothing further new either
+check), site health (200, confirmed serving the new hero). No other ripe unblocked work found. Idling —
+awaiting any pushback on the shape, but not blocking on it per xian's "no need to settle" framing.
+
+---
+
 ## 2026-10-14 — No-op duty-cycle fire (Zephyr)
 
 Synced clean (ff-only, picked up the 2026-10-14 cross-pollination brief, pointer-only as expected). No new mail;
