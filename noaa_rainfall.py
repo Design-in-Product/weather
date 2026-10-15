@@ -722,6 +722,14 @@ function fetchLiveTemp(hero) {
   fetch(`https://api.weather.gov/stations/${icao}/observations/latest`, {
     headers: { Accept: 'application/geo+json' },
     signal: controller.signal,
+    // NWS sets Cache-Control: max-age based on time until *that station's*
+    // next expected observation, which varies station-to-station and can
+    // run well past our poll interval — without this, the browser's HTTP
+    // cache can keep serving one station's stale response for far longer
+    // than the others (caught by xian 2026-10-15: SFO stuck while Palo
+    // Alto and San Jose kept updating). We poll on our own schedule, so
+    // always hit the network.
+    cache: 'no-store',
   })
     .then(r => r.json())
     .then(data => {
