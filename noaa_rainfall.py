@@ -711,14 +711,39 @@ document.querySelectorAll('.src-btn').forEach(btn => {
 // note — never a blank or broken hero. Refreshes every source's hero
 // regardless of which one is currently shown, so switching the selector
 // never shows stale data mid-session.
-function fetchLiveTemp(hero) {
+// Folds a fresh live reading into the "high/low so far today" card so it
+// can't show a high or low that's already been beaten by the current
+// reading (caught by xian 2026-10-15: hero showing 81° while the today
+// card still said "73° high"). Only applies when that card is actually
+// showing *today's* envelope (data-today-is-live-day, set at build time)
+// — a source whose daily fetch hasn't posted today's row yet would
+// otherwise get a live reading wrongly folded into a previous day's card.
+function foldIntoTodayCard(hero, tempF) {
+  const section = hero.closest('.source-section');
+  const todayRow = section && section.querySelector('[data-today-is-live-day="1"]');
+  if (!todayRow) return;
+  const highEl = todayRow.querySelector('[data-today-high]');
+  const lowEl = todayRow.querySelector('[data-today-low]');
+  if (highEl) {
+    const cur = parseFloat(highEl.textContent);
+    const next = Number.isNaN(cur) ? tempF : Math.max(cur, tempF);
+    highEl.innerHTML = `${Math.round(next)}°<span class="unit"> high</span>`;
+  }
+  if (lowEl) {
+    const cur = parseFloat(lowEl.textContent);
+    const next = Number.isNaN(cur) ? tempF : Math.min(cur, tempF);
+    lowEl.innerHTML = `${Math.round(next)}°<span class="unit"> low</span>`;
+  }
+}
+
+function fetchLiveTemp(hero, isRetry) {
   const icao = hero.dataset.liveIcao;
   if (!icao) return;
   const numberEl = hero.querySelector('[data-live-number]');
   const metaEl = hero.querySelector('[data-live-meta]');
   metaEl.classList.add('live-updating');
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 12000);
   fetch(`https://api.weather.gov/stations/${icao}/observations/latest`, {
     headers: { Accept: 'application/geo+json' },
     signal: controller.signal,
@@ -731,19 +756,32 @@ function fetchLiveTemp(hero) {
     // always hit the network.
     cache: 'no-store',
   })
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
     .then(data => {
       const props = data && data.properties;
       const tempC = props && props.temperature ? props.temperature.value : null;
       const ts = props ? props.timestamp : null;
-      if (tempC === null || tempC === undefined || !ts) throw new Error('no reading');
+      if (tempC === null || tempC === undefined || !ts) throw new Error('no reading in response');
       const tempF = tempC * 9 / 5 + 32;
       const observed = new Date(ts);
       const timeStr = observed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       numberEl.textContent = Math.round(tempF);
       metaEl.textContent = `Live as of ${timeStr}`;
+      foldIntoTodayCard(hero, tempF);
     })
-    .catch(() => {
+    .catch(err => {
+      // Logged (not just swallowed) so a repeat of this is diagnosable
+      // from the browser console next time, instead of a silent guess.
+      console.error(`[weather] live fetch failed for ${icao}${isRetry ? ' (retry)' : ''}:`, err);
+      if (!isRetry) {
+        // One quick retry rather than waiting out the full 10-minute poll
+        // interval — most failures this catches are transient.
+        setTimeout(() => fetchLiveTemp(hero, true), 15000);
+        return;
+      }
       if (!metaEl.querySelector('.live-fail')) {
         metaEl.innerHTML += ' <span class="live-fail">(live update failed, retrying)</span>';
       }
@@ -755,7 +793,13 @@ function fetchLiveTemp(hero) {
 }
 
 function refreshAllLiveTemps() {
-  document.querySelectorAll('.temp-hero[data-live-icao]').forEach(fetchLiveTemp);
+  // Staggered rather than fired all at once — reduces simultaneous
+  // cross-origin connection contention on a slow/cellular link, a
+  // plausible factor in the SFO-specific failures xian saw (the NWS API
+  // itself answered every request cleanly when checked directly).
+  document.querySelectorAll('.temp-hero[data-live-icao]').forEach((hero, i) => {
+    setTimeout(() => fetchLiveTemp(hero, false), i * 300);
+  });
 }
 
 if (document.querySelector('.temp-hero[data-live-icao]')) {
@@ -1013,12 +1057,17 @@ def _render_temp_section(source: dict, season_start: date, today: date,
 
     # "At a glance" card: today's high/low (or most recent final day's),
     # always shown regardless of whether a live reading exists — ratified
-    # 2026-10-15 per xian's build-cadence answer.
+    # 2026-10-15 per xian's build-cadence answer. `data-today-is-live-day`
+    # (only "1" when this card is actually showing *today*, not a
+    # fallback day) tells the client JS it's safe to fold a fresh live
+    # reading into this envelope — added same day, after xian caught the
+    # hero showing a live temp past what this card's build-time high said.
+    is_live_day = "1" if (latest and days_since == 0) else "0"
     today_card_html = (
         f'<div class="section-title">{today_label}</div>'
-        '<div class="recent">'
-        f'<div class="amount">{hi_str}°<span class="unit"> high</span></div>'
-        f'<div class="amount">{lo_str}°<span class="unit"> low</span></div>'
+        f'<div class="recent" data-today-is-live-day="{is_live_day}">'
+        f'<div class="amount" data-today-high>{hi_str}°<span class="unit"> high</span></div>'
+        f'<div class="amount" data-today-low>{lo_str}°<span class="unit"> low</span></div>'
         '</div>'
     )
 
