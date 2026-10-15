@@ -4,6 +4,47 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-15 (screenshots) — Two more live-hero issues from xian: one fixed clean, one improved not root-caused (Zephyr)
+
+xian sent four screenshots of the live browser session (not mail — inline in conversation), flagging "some
+anomalies." Found two real issues beyond the SFO cache bug already fixed this session:
+
+**1. Hero vs. today-card contradiction (fixed clean).** Palo Alto showed 75° current temperature while "high
+so far today" still said 70°; San Jose showed 81° against a 73° high. The today-card was frozen at build time
+while the hero went live — a warming afternoon made the page visibly disagree with itself. Fixed: a successful
+live fetch now also folds into the today-card's high/low (max/min against the live reading), via new
+`data-today-high`/`data-today-low`/`data-today-is-live-day` hooks in `_render_temp_section`, with the client
+JS's new `foldIntoTodayCard()`. Guarded to only apply when that card is genuinely showing today's envelope
+(`days_since == 0` at build time), not a fallback day from a lagging daily fetch.
+
+**2. SFO "(live update failed, retrying)," stuck over an hour (improved, not root-caused).** Hit
+`api.weather.gov/stations/KSFO/observations/latest` directly and repeatedly around the same time as the
+screenshot — answered cleanly every time, under half a second, so this wasn't server-side and I couldn't
+reproduce it. Shipped what's genuinely likely to help without overclaiming a fix: the catch() block was
+previously swallowing the real error with no logging at all — nothing to diagnose from if it recurred — now
+`console.error`'d with the actual error. Added one quick 15s retry before showing the failure note (most
+transient failures this would catch self-heal fast). Staggered the three stations' fetches 300ms apart instead
+of firing simultaneously (plausible factor: contention on a weaker connection — the screenshot's signal bar
+looked low). Timeout extended 8s → 12s for slack on slower links.
+
+Shipped (`b89a5f0`), deployed (run `38802482204`, green), confirmed live (`data-today-is-live-day`,
+`foldIntoTodayCard`, `console.error` all present in the deployed page).
+
+**Verification:** full build against live NOAA/IEM/NWS endpoints (no mocks), Python/JS syntax checks, HTML
+tag-balance check. **Not verified:** interactive browser behavior — same standing caveat as the original
+feature; the fold-in logic and the SFO retry/logging path are reasoned through carefully but not click-tested.
+
+Replied to xian, cc Janus, honest about which fix is confirmed (#1) vs. improved-but-unconfirmed (#2), and
+asked for the console error text next time #2 recurs, since that's now actually capturable:
+`designinproduct/docs/mail/zephyr-to-xian-cc-janus-today-card-and-sfo-retry-fixed-2026-10-15.md`.
+
+**Drain:** handled both issues fully (diagnosed what I could, fixed what I could confirm, improved what I
+couldn't, tested, deployed, verified live, replied); checked mail twice beyond that (nothing further new
+either check). No other ripe unblocked work found. Idling — SFO root cause remains genuinely open, named
+blocker: need either a reproduction or a real console error to go further, neither available yet.
+
+---
+
 ## 2026-10-15 (mail wake) — SFO live-timestamp bug found by xian, fixed (Zephyr)
 
 Mail landed: `docs/mail/xian-via-janus-to-zephyr-sfo-timestamp-stuck-2026-10-15.md` — xian did the interactive
