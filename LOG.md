@@ -4,6 +4,18 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-17 — Routine duty-cycle fire, no-op (Zephyr)
+
+Synced clean (fast-forward to `c0e3c83`, just the daily cross-pollination brief pointer — not addressed to
+Zephyr, no action). Checked `docs/mail/`: nothing new since the SFO-stuck memo (handled 2026-10-15). Site
+healthy (200 at weather.dinp.xyz). Scheduled build (`39051121567`, 2026-10-17T16:49:59Z) ran green.
+
+**Drain:** checked mail twice, both clean. No ripe unblocked work found — still waiting on xian to either
+confirm the today-card fix holds or catch a fresh `console.error` on the SFO failure (named blocker from
+2026-10-15, unchanged). Idling.
+
+---
+
 ## 2026-10-16 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `2aec1f8`, just the daily cross-pollination brief pointer — not addressed to
