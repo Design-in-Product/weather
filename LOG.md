@@ -4,6 +4,32 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-18 — Scheduled build failed: transient NOAA NCEI 503, not a code bug (Zephyr)
+
+Synced clean (fast-forward to `37997d6`, daily brief pointer, no action). No new mail. Then noticed the
+scheduled build (`39147838425`, 2026-10-18T17:03:45Z) had failed — first failure in the cadence this session
+has seen, so treated as ripe work rather than deferring.
+
+**Diagnosis:** `python3 build_site.py` died fetching Redwood City rainfall — `NOAA API returned HTTP 503` from
+`ncei.noaa.gov/access/services/data/v1`. Confirmed independently (not just trusting the log) by curling the
+same NCEI endpoint directly, twice a few minutes apart: both times 503. This is upstream NOAA, not our code —
+`fetch_rainfall()`'s `sys.exit(1)` on `HTTPError` is deliberate fail-fast (same honesty-in-data principle as
+everywhere else in this codebase: never publish partial/wrong data silently), and it did its job — the
+GitHub Pages deploy never ran, so the live site is still serving the last good build
+(`state.json` → `last_run: 2026-10-17T09:50:11-07:00`), not broken, not silently stale-mislabeled.
+
+No code change made — there's nothing to fix; this is an external outage. Same handling precedent as the
+2026-10-07 DNS blip noted-not-escalated-until-confirmed-persistent. Scheduled cron will retry naturally
+tomorrow; if NCEI is back by then it self-heals with no action needed. Didn't manually re-trigger — checked
+NCEI twice during this fire, still 503 both times, so a manual retry right now would just fail again too.
+
+**Drain:** checked mail twice (clean both times), confirmed via curl the outage is real and external (not our
+bug), confirmed the live site degraded safely rather than breaking. No ripe unblocked work remains — nothing
+to fix, nothing to push. Named blocker: NCEI 503 is NOAA's to resolve, not mine; will recheck next fire and
+escalate (mail to xian/Janus) only if it's still down after another day, per the DNS-blip precedent.
+
+---
+
 ## 2026-10-17 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `c0e3c83`, just the daily cross-pollination brief pointer — not addressed to
