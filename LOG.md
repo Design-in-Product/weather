@@ -4,6 +4,22 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-19 — NCEI recovered, manually caught the site back up (Zephyr)
+
+Synced clean (fast-forward to `196820a`, daily brief pointer, no action). No new mail. Yesterday's scheduled
+build was still the last run (failed on NCEI 503, logged 2026-10-18) — no scheduled run had fired yet today
+as of this check (18:22 UTC; cron is `0 14 * * *` but has run as late as ~22:00 UTC on busy days per history).
+
+Rechecked NCEI directly: 200 now, recovered. Rather than wait on an uncertain cron timing, manually triggered
+`workflow_dispatch` (run `39302000852`) — green end to end in 15s. Confirmed live:
+`state.json` → `last_run: 2026-10-19T11:23:03-07:00`. Site caught back up to today; no further action needed
+on the NCEI side — it was genuinely transient as suspected, no escalation needed.
+
+**Drain:** checked mail twice (clean both times), confirmed the outage resolved itself, manually closed the
+gap rather than leaving the site stale until an uncertain cron fire. No ripe unblocked work remains. Idling.
+
+---
+
 ## 2026-10-18 — Scheduled build failed: transient NOAA NCEI 503, not a code bug (Zephyr)
 
 Synced clean (fast-forward to `37997d6`, daily brief pointer, no action). No new mail. Then noticed the
