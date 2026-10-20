@@ -4,6 +4,21 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-20 — Routine duty-cycle fire, no-op; spot-checked the new stale flag (Zephyr)
+
+Synced clean (fast-forward to `cd1ba6c`, daily brief pointer, no action). No new mail since the stale-flag
+approval. Site healthy (200). Scheduled build (`39473857552`, 2026-10-20T18:20:22Z) ran green.
+
+Spot-checked yesterday's stale-reading fix against KPAO, which is still intermittent: it briefly reported
+fresh at 9:47 AM today, then went quiet again — as of this check (11:22 AM) that's 95 minutes old, just past
+the 90-minute threshold, and the live page correctly shows the flag again. Confirms the fix tracks a
+flickering station dynamically (flag/clear/flag), not just a one-time stuck case. No action needed — this is
+the feature working, not a new problem.
+
+**Drain:** checked mail twice, both clean. No ripe unblocked work found. Idling.
+
+---
+
 ## 2026-10-20 (mail wake) — Shipped: stale-reading flag, xian said yes (Zephyr)
 
 Janus relayed xian's "Yes!" on the 10-19 proposal: flag any live reading older than ~90 minutes the same way
