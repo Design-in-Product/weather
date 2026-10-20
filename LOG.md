@@ -4,6 +4,43 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-19 (mail wake) — "Temp still not right": diagnosed KPAO station stall, not a fetch bug (Zephyr)
+
+Janus relayed a short, specific-less note from xian ("weather (temp still not right)") while waiting on a
+screenshot. Janus suggested a diagnostic I could do without waiting: compare each station's shown current,
+high, low against NWS directly for the same hour. Did that for all four.
+
+**Palo Alto (KPAO) — the likely culprit.** Hero showed 59°F, "Live as of 9:47 AM" — the number and label are
+both correct (matches NWS exactly), but pulling KPAO's own observation history directly showed it hasn't
+reported anything newer than 16:47 UTC (9:47 AM Pacific) — over 8 hours stale as of this check, 6:11 PM
+Pacific. Also found an unexplained ~10-hour overnight gap (3:47 AM–1:47 PM) in the same history. This is the
+station itself going quiet upstream (NWS/FAA feed for that airport), not our fetch failing — a different root
+cause than either of the two bugs fixed on 10-15 (browser cache, frozen today-card).
+
+**San Jose (KSJC) / SFO (KSFO) — no disagreement.** Both match NWS exactly, updating every ~5 minutes
+(62.6°F as of 5:10 PM for both — coincidental bay-wide evening convergence, verified, not a bug).
+
+**Redwood City — also checked, also correct.** Hero showed 91°/"3 days ago (final)." Pulled NCEI's archival
+record for Oct 16 directly: TMAX 91, TMIN 50 — matches exactly. Real mid-October heat spike (78→92→91°F
+Oct 13–16), not a glitch; just the known 3-day COOP lag, already honestly labeled as such.
+
+**Real gap found, not yet fixed:** a successful fetch that returns an old NWS timestamp (station stalled)
+currently displays identically to a fresh one — only an actual fetch *failure* gets the amber
+"update failed" treatment. KPAO exposed that today. Proposed (not built): treat a reading older than ~90
+minutes the same as a fetch failure, visually. Didn't build it yet — this is a labeling/threshold design call
+like the ones xian has ruled on directly before (hero-is-current-temp, today-card-separate), not a mechanical
+bug fix, so reported instead of shipping blind.
+
+Replied: `designinproduct/docs/mail/zephyr-to-janus-cc-xian-kpao-stale-live-reading-found-2026-10-19.md`
+(cc xian). Noted this stands regardless of xian's pending screenshot to Janus, since verified independently
+against live NWS data.
+
+**Drain:** diagnosed fully, no code change made (deliberately — awaiting a design decision, not a missing
+capability). Checked mail/sync before and after — clean. No other ripe work found. Named blocker: whether to
+build the staleness-indicator, and what threshold/wording — xian's call. Idling.
+
+---
+
 ## 2026-10-19 — NCEI recovered, manually caught the site back up (Zephyr)
 
 Synced clean (fast-forward to `196820a`, daily brief pointer, no action). No new mail. Yesterday's scheduled
