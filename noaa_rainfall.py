@@ -285,6 +285,10 @@ def fetch_rainfall_iem(station_icao: str, network: str,
 
 
 NWS_API_BASE = "https://api.weather.gov"
+# Hourly METAR cadence means a healthy station should never be older than
+# this; past it, treat the reading as stale rather than live (xian's call,
+# 2026-10-20, after KPAO's station stalled for 8+ hours on 2026-10-19).
+LIVE_READING_STALE_AFTER = timedelta(minutes=90)
 
 
 def fetch_nws_current_observation(icao: str, debug: bool = False) -> Optional[dict]:
@@ -769,7 +773,14 @@ function fetchLiveTemp(hero, isRetry) {
       const observed = new Date(ts);
       const timeStr = observed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       numberEl.textContent = Math.round(tempF);
-      metaEl.textContent = `Live as of ${timeStr}`;
+      // A fetch can succeed yet still hand back an old reading if the
+      // station itself has stopped reporting (KPAO, 2026-10-19: stuck 8+
+      // hours while other stations kept updating). Flag that the same way
+      // as a fetch failure instead of presenting stale data as current.
+      const ageMs = Date.now() - observed.getTime();
+      metaEl.innerHTML = ageMs > 90 * 60 * 1000
+        ? `Live as of ${timeStr} <span class="live-fail">(no newer reading)</span>`
+        : `Live as of ${timeStr}`;
       foldIntoTodayCard(hero, tempF);
     })
     .catch(err => {
@@ -1086,11 +1097,20 @@ def _render_temp_section(source: dict, season_start: date, today: date,
     live_attrs = ""
     if live_reading:
         live_f = live_reading["temp_f"]
-        observed_local = live_reading["observed_at"].astimezone(ZoneInfo("America/Los_Angeles"))
+        observed_at = live_reading["observed_at"]
+        observed_local = observed_at.astimezone(ZoneInfo("America/Los_Angeles"))
         observed_str = observed_local.strftime("%-I:%M %p")
         hero_number = f'{live_f:.0f}'
         hero_label_text = "Current temperature"
         hero_meta = f'Live as of {observed_str}'
+        # A reading can be fetched successfully yet already old — the
+        # station itself stopped reporting (KPAO, 2026-10-19: no new
+        # observation for 8+ hours while PAO/SFO kept updating fine).
+        # Flag it the same way as a fetch failure rather than presenting a
+        # stale reading as if it were current (xian's call, 2026-10-20:
+        # flag anything older than ~90 minutes).
+        if generated_at.astimezone(observed_at.tzinfo) - observed_at > LIVE_READING_STALE_AFTER:
+            hero_meta += ' <span class="live-fail">(no newer reading)</span>'
         live_attrs = (
             f' data-live-icao="{live_icao}"'
             f' data-live-temp-f="{live_f:.1f}"'
