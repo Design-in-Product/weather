@@ -4,6 +4,34 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-20 (mail wake) — Shipped: stale-reading flag, xian said yes (Zephyr)
+
+Janus relayed xian's "Yes!" on the 10-19 proposal: flag any live reading older than ~90 minutes the same way
+as a fetch failure, instead of silently showing a stale-but-successful reading as current.
+
+**Built both halves.** Added `LIVE_READING_STALE_AFTER = timedelta(minutes=90)` and a staleness check in
+`_render_temp_section`'s build-time hero render (Python), and the matching check in `fetchLiveTemp`'s
+client-side JS, comparing the reading's observed timestamp against build time / `Date.now()` respectively.
+Past the threshold, `hero_meta` gets ` <span class="live-fail">(no newer reading)</span>` appended — same
+class, same amber styling as the existing fetch-failure state. No new recovery logic needed: each client poll
+re-checks age fresh, so a station coming back online clears the flag automatically on its next successful
+fetch.
+
+**Verified against the real, still-live situation** (good timing — KPAO was still stalled from 10-19):
+rebuilt against live NOAA/IEM/NWS endpoints, confirmed KPAO's hero (observed 8:47 PM the previous evening, now
+7.5+ hours stale) rendered with the flag, while San Jose/SFO (fresh within 30 min) rendered clean with none.
+Deployed (`17aea50`, run `39414622732`, green) and re-confirmed the flag present on the live production page,
+not just the local build — this one didn't need the "not verified: interactive browser behavior" caveat for
+the build-time half, since the actual stale condition was live and checkable by curl.
+
+Replied: `designinproduct/docs/mail/zephyr-to-janus-cc-xian-stale-flag-shipped-2026-10-20.md` (cc xian).
+
+**Drain:** checked mail/sync before and after — clean both times. No other ripe work found. Idling — KPAO's
+station outage itself is NWS/FAA's to resolve, not ours; nothing further to do there except let the new flag
+do its job.
+
+---
+
 ## 2026-10-19 (mail wake) — "Temp still not right": diagnosed KPAO station stall, not a fetch bug (Zephyr)
 
 Janus relayed a short, specific-less note from xian ("weather (temp still not right)") while waiting on a
