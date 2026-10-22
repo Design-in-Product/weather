@@ -4,6 +4,39 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-22 (mail wake) — "0 inches across the board": stale build, not a bug; Redwood City's rain-lag labeling gap flagged (Zephyr)
+
+Pard relayed xian: rain since Oct 21, but the site showed 0.00" everywhere, "looks stuck." Pard did real
+legwork first — read-only repo inspection, a lag hypothesis, three specific questions to answer. Verified each
+directly rather than trusting the hypothesis:
+
+**NCEI lags to Oct 18** for every station (confirmed by querying directly) — expected, archival data always
+runs days behind. **But San Jose and SFO already have an IEM near-real-time gap-fill** (built for exactly
+this), and IEM has the real numbers: San Jose 0.06", SFO 0.07" today, a trace yesterday. Ran `build_site.py`
+locally first — it merged these in correctly without any code change (`merge_rainfall_records` picked up all
+four missing days as expected). So this wasn't a fetch bug or a silent-zero bug on those three stations —
+
+**it was a stale deploy.** Last build was yesterday (Oct 21) 11:22 AM, before the rain started; today's
+~7am-Pacific cron hadn't fired yet when xian checked (GitHub Actions schedule delay — seen before, nothing
+new). Rather than wait on it, manually triggered `workflow_dispatch` (run `39818661841`, green). Confirmed
+live: Palo Alto 0.06", San Jose 0.06", SFO 0.07", all labeled "today."
+
+**Redwood City remains a real, unresolved gap** — it's COOP-only, no IEM equivalent (same limitation as its
+temperature side), so it has no same-day source at all. Still shows 0.00"/"No rain recorded this season,"
+which is honestly what NCEI says through Oct 18 but says nothing about Oct 19–22 — currently indistinguishable
+from an actual dry spell on the page. This is the same honesty-in-labeling gap Pard named directly ("a
+no-data state should look different from a dry day"), parallel to the temperature stale-flag shipped
+2026-10-20. Didn't build anything for it — flagged as a design decision for xian, not shipped blind.
+
+Replied: `designinproduct/docs/mail/zephyr-to-xian-cc-janus-pard-rain-was-stale-build-not-a-bug-2026-10-22.md`
+(cc Janus, Pard), answering all three of Pard's questions directly.
+
+**Drain:** diagnosed fully, confirmed the fix live, no code change needed (deploy-timing only). Checked
+mail/sync clean before and after. Named blocker for the one open item: whether/how to label Redwood City's
+rain-side archival lag — xian's call, parallel precedent already set by the temp stale-flag decision. Idling.
+
+---
+
 ## 2026-10-21 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `971524d`, daily brief pointer, no action). No new mail since the stale-flag
