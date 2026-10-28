@@ -4,6 +4,17 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-28 — Routine duty-cycle fire, no-op (Zephyr)
+
+Synced clean (fast-forward to `3111a3a`, daily brief pointer, no action). No new mail — newest file in
+`docs/mail/` is still the 2026-10-22 rain-diagnosis thread, already replied. Site healthy (200). Yesterday's
+scheduled build (`40567047292`) ran green at 19:12 UTC, in line with the known variable-delay pattern. Today's
+scheduled build hadn't appeared by this check (18:22 UTC) — same pattern, not overdue.
+
+**Drain:** checked mail/sync twice, both clean. No ripe unblocked work found. Idling.
+
+---
+
 ## 2026-10-27 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `4f11c95`, daily brief pointer, no action). No new mail — newest file in
