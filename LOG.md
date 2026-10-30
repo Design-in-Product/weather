@@ -4,6 +4,24 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-10-30 — Routine duty-cycle fire; convention update adopted, no code change (Zephyr)
+
+Synced clean (fast-forward to `d5ae074`). New broadcast mail from Janus (relaying xian, all points of
+contact): outbound cross-repo mail should go via `~/Development/mediajunkie/scripts/mail-deliver.sh
+<repo-dir> <path-in-repo> < memo.md`, writing `date: now` in frontmatter — the script fills in the real
+Pacific send time and session attribution trailers mechanically instead of us typing them. Verified the
+script exists and matches the memo's description. No reply needed (memo said so explicitly); adopting it for
+my own future outbound mail — no action needed in this repo otherwise.
+
+No other new mail — next newest file is still the 2026-10-22 rain-diagnosis thread, already replied. Site
+healthy (200). Yesterday's scheduled build (`40939776319`) ran green at 19:24 UTC, consistent with the known
+variable-delay pattern.
+
+**Drain:** checked mail/sync twice, both clean after noting the convention update. No ripe unblocked work
+found. Idling.
+
+---
+
 ## 2026-10-29 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `938df4f`, daily brief pointer, no action). No new mail — newest file in
