@@ -4,6 +4,20 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-03 — Routine duty-cycle fire, no-op; noting widened build-delay drift (Zephyr)
+
+Synced clean (fast-forward to `705ef85`, daily brief pointer, no action). No new mail — newest file in
+`docs/mail/` is still the 2026-10-30 mail-deliver.sh broadcast. Site healthy (200). Yesterday's scheduled
+build (`41538465402`) succeeded but at 22:34 UTC — 8h34m after the 14:00 UTC cron target, wider than the
+previously observed max (~5h44m, Oct 26). Still a one-off success, not a failure, but worth tracking: if this
+drift keeps widening it's worth asking whether GitHub's scheduler delay itself is growing rather than just
+jittering. Today's build hadn't appeared by this check (19:22 UTC, 5h22m post-cron) — within the
+already-established range, not treated as overdue.
+
+**Drain:** checked mail/sync twice, both clean. No ripe unblocked work found. Idling.
+
+---
+
 ## 2026-11-02 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `0c606ca`, daily brief pointer, no action). No new mail — newest file in
