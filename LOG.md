@@ -4,6 +4,28 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-03 (mail wake) — Shipped: Redwood City rain labeled "archival lag" instead of reading as a dry spell (Zephyr)
+
+Janus relayed xian's yes on the 10-22 proposal (Pard's "0 inches across the board" catch): when a rain
+source's data lags behind today, label it rather than let the gap look like a dry spell.
+
+**Built.** `_render_source_section` in `noaa_rainfall.py` now compares each source's latest record date
+against build day; when it trails, the hero meta gets ` <span class="live-fail">(as of <date> — archival
+lag)</span>` appended — same amber styling as the live-temperature stale flag. Checked generically against
+the records themselves (not keyed to `redwood_city`), so San Jose/SFO would flag too if their IEM gap-fill
+ever stopped keeping up. Ran `build_site.py` locally and confirmed: Redwood City shows "(as of Oct 30 —
+archival lag)"; Palo Alto estimate, San Jose, SFO stay unlabeled since IEM keeps them current.
+
+Replied (via the new `mail-deliver.sh`, first use of the 10-30 convention):
+`designinproduct/docs/mail/zephyr-to-xian-cc-janus-pard-redwood-city-archival-lag-label-shipped-2026-11-03.md`
+(cc Janus, Pard). Pushed the code change to `main` (`25638c9`); the live site picks it up on the next
+scheduled build, no manual dispatch — consistent with "not urgent."
+
+**Drain:** this was the only ripe item (no other new mail beyond the mail-deliver.sh broadcast already
+logged 10-30). Checked mail/sync twice after shipping, both clean. No further unblocked work found. Idling.
+
+---
+
 ## 2026-11-03 — Routine duty-cycle fire, no-op; noting widened build-delay drift (Zephyr)
 
 Synced clean (fast-forward to `705ef85`, daily brief pointer, no action). No new mail — newest file in
