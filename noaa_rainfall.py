@@ -921,6 +921,21 @@ def _render_source_section(source: dict, season_start: date, today: date,
     note = source.get("note", "")
     note_html = f'<div class="note">{note}</div>' if note else ""
 
+    # Archival lag: Redwood City (COOP) has no IEM near-real-time gap-fill,
+    # so NCEI's archival delay can leave `records` several days behind
+    # `today` with no way to tell a real reporting gap from an actual dry
+    # spell (Pard's 10-22 catch; xian's yes, 2026-11-03: label it the same
+    # way as the live-temp stale flag rather than let it read as "no rain").
+    # Written generically against the records themselves, not keyed to a
+    # source name, so it would also flag San Jose/SFO if their IEM gap-fill
+    # ever stopped keeping up.
+    staleness_html = ""
+    if source["records"]:
+        latest_date = datetime.strptime(source["records"][-1]["date"], "%Y-%m-%d").date()
+        if latest_date < today:
+            as_of_str = latest_date.strftime("%b %-d")
+            staleness_html = f' <span class="live-fail">(as of {as_of_str} — archival lag)</span>'
+
     # Recent rain card
     last_rain = summary["last_rain"]
     if last_rain:
@@ -981,7 +996,7 @@ def _render_source_section(source: dict, season_start: date, today: date,
         '<div class="card hero">'
         f'<div><span class="number">{total:.2f}</span><span class="unit"> in</span></div>'
         '<div class="label">Season total</div>'
-        f'<div class="meta">{rainy} {rainy_lbl} with rain · since {season_start.strftime("%b %-d, %Y")}</div>'
+        f'<div class="meta">{rainy} {rainy_lbl} with rain · since {season_start.strftime("%b %-d, %Y")}{staleness_html}</div>'
         f'{note_html}'
         '</div>'
         f'<div class="card">{recent_html}</div>'
