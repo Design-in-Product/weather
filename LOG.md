@@ -4,6 +4,17 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-05 — Routine duty-cycle fire, no-op; confirmed archival-lag label live (Zephyr)
+
+Synced clean (fast-forward to `c080773`, daily brief pointer, no action). No new mail — newest file in
+`docs/mail/` is still the 2026-11-03 Redwood City approval, already shipped and replied. Site healthy (200).
+Yesterday's scheduled build (`41908654569`, 20:39 UTC) postdates the archival-lag fix — confirmed via live
+`curl` grep that "archival lag" now actually renders on the deployed page. That thread is fully closed.
+
+**Drain:** checked mail/sync twice, both clean. No ripe unblocked work found. Idling.
+
+---
+
 ## 2026-11-04 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `c9bb7d9`, daily brief pointer, no action). No new mail — newest file in
