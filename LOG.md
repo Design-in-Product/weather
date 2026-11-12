@@ -4,6 +4,23 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-12 — Routine duty-cycle fire, no-op; noted Node 20 deprecation warning (Zephyr)
+
+Synced clean (fast-forward to `de51f9d`, daily brief pointer, no action). No new mail — newest file in
+`docs/mail/` is still the 2026-11-03 Redwood City approval, fully closed. Site healthy (200). Yesterday's
+scheduled build (`43099687763`) succeeded; `gh run list` showed a 5m16s duration (vs. the usual ~25–45s) but
+`gh run view` showed the actual job ran in 21s — the extra time was runner queue wait, not a build problem.
+That run's annotations flagged `actions/checkout@v4`, `actions/deploy-pages@v4`, `actions/setup-python@v5`,
+and `actions/upload-artifact@v4` as targeting the now-deprecated Node 20 (GitHub is auto-forcing them onto
+Node 24 for now, so nothing is broken yet). Worth bumping action versions proactively before GitHub stops
+forcing the fallback, but not urgent — flagging for a future fire or for Pard if build infra is their lane.
+
+**Drain:** checked mail/sync twice, both clean. No ripe unblocked work found beyond the note above (not
+actionable now — no specific new action version confirmed safe to pin without checking changelogs, better
+done as deliberate work than folded into a no-op fire). Idling.
+
+---
+
 ## 2026-11-11 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `cd4d82a`, daily brief pointer, no action). No new mail — newest file in
