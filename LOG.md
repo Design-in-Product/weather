@@ -4,6 +4,18 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-15 — Routine duty-cycle fire, no-op (Zephyr)
+
+Synced clean (fast-forward to `e8bfa7f`, daily brief pointer, no action). No new mail — newest file in
+`docs/mail/` is still the 2026-11-03 Redwood City approval, fully closed. Site healthy (200). Today's
+scheduled build hadn't appeared yet by this check — last run still yesterday's (`43629340788`, 18:56 UTC);
+within the known variable-delay pattern, not treated as overdue. Node 20 deprecation note from 2026-11-12
+still open as a future deliberate fix, not urgent.
+
+**Drain:** checked mail/sync twice, both clean. No ripe unblocked work found. Idling.
+
+---
+
 ## 2026-11-14 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `8082a57`, daily brief pointer, no action). No new mail — newest file in
