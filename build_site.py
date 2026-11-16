@@ -14,7 +14,7 @@ Usage:
 import json
 import shutil
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -69,13 +69,32 @@ SITE_DIR = REPO_DIR / "site"
 SKETCHES_DIR = REPO_DIR / "sketches"
 HISTORY_DIR = REPO_DIR / "history"
 
-# IEM station mapping for gap-filling NCEI with near-real-time ASOS data.
-# Only airport (ASOS/AWOS) stations have IEM equivalents.
+# IEM station mapping for gap-filling NCEI with near-real-time data.
 IEM_MAPPING = {
+    # Same COOP gauge as USC00047339 (IEM's SHEF feed, days ahead of NCEI):
+    # 41/41 overlapping Oct–Nov 2026 days matched NCEI exactly, rain and temps.
+    "redwood_city": {"icao": "RWCC1", "network": "CA_COOP"},
     "san_jose": {"icao": "SJC", "network": "CA_ASOS"},
     "sfo": {"icao": "SFO", "network": "CA_ASOS"},
-    # Redwood City (USC00047339) is a COOP station — no IEM equivalent.
 }
+
+
+def _contiguous_after(records: list[dict], after: date) -> list[dict]:
+    """Keep only the unbroken run of daily records starting the day after `after`.
+
+    IEM omits days whose precip is unreported (RWCC1 skipped rainy Nov 13 and
+    15, 2026); filling past such a hole would render it as a silent dry day.
+    """
+    kept = []
+    expected = after + timedelta(days=1)
+    for r in records:
+        if r["date"] <= after.isoformat():
+            continue
+        if r["date"] != expected.isoformat():
+            break
+        kept.append(r)
+        expected += timedelta(days=1)
+    return kept
 
 # Palo Alto's temperature-only IEM station (KPAO), ratified 2026-09-29.
 # Deliberately not in IEM_MAPPING above: that mapping gap-fills an
@@ -189,6 +208,8 @@ def main() -> None:
         iem_records = fetch_rainfall_iem(
             iem_info["icao"], iem_info["network"], iem_start, today,
         )
+        last_known = iem_start if ncei_records else iem_start - timedelta(days=1)
+        iem_records = _contiguous_after(iem_records, last_known)
         before = len(ncei_records)
         fetched[key] = merge_rainfall_records(ncei_records, iem_records)
         added = len(fetched[key]) - before

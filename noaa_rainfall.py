@@ -921,8 +921,8 @@ def _render_source_section(source: dict, season_start: date, today: date,
     note = source.get("note", "")
     note_html = f'<div class="note">{note}</div>' if note else ""
 
-    # Archival lag: Redwood City (COOP) has no IEM near-real-time gap-fill,
-    # so NCEI's archival delay can leave `records` several days behind
+    # Archival lag: Redwood City's IEM gap-fill stops at its first unreported
+    # day, so NCEI's archival delay can still leave `records` several days behind
     # `today` with no way to tell a real reporting gap from an actual dry
     # spell (Pard's 10-22 catch; xian's yes, 2026-11-03: label it the same
     # way as the live-temp stale flag rather than let it read as "no rain").
