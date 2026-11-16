@@ -1,15 +1,17 @@
 name: Update rainfall site
 
-# Daily build of the rainfall dashboard. Fetches NOAA data, builds the static
-# site under ./site/, deploys to GitHub Pages, and emails Xian if any newly
-# observed records contain rain (set-diff against the previously deployed
+# Hourly build of the rainfall dashboard. Fetches NOAA + IEM data, builds the
+# static site under ./site/, deploys to GitHub Pages, and emails Xian if any
+# newly completed day contains rain (set-diff against the previously deployed
 # state.json fetched from the live site).
 #
-# NOAA's GHCN-Daily feed lags several days, so once-a-day is plenty.
+# Hourly 4am–11pm PST (5am–midnight PDT), per xian's 2026-10-15 cadence ruling;
+# IEM rain is same-day, so a once-a-day build left the site a day behind.
+# Off the top of the hour because GitHub delays :00 schedules the most.
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # 14:00 UTC daily ≈ 7am Pacific (6am PST / 7am PDT)
+    - cron: '17 0-7,12-23 * * *'
   workflow_dispatch: {}
 
 permissions:

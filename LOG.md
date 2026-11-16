@@ -4,6 +4,27 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-16 — Rain lag fixed: build is now hourly, not daily (Zephyr)
+
+xian reported the site well behind on rain. Nothing was failing — every daily build was green. The cause
+was cadence: one build a day at a 14:00 UTC cron that GitHub has been starting 5–9h late, so the site sat
+on Sunday 11:32 AM data while IEM already had San Jose 0.32" (Nov 15) + 0.21" (Nov 16 so far) and SFO
+0.80" + 0.13". Manual dispatch (`43909505530`) caught it up: Palo Alto 0.76→1.29", San Jose 0.71→1.24",
+SFO 1.72→2.65". Redwood City stays "as of Nov 10" — NCEI co-op archival lag, no same-day source, already
+labeled.
+
+Lasting fix, under xian's 2026-10-15 cadence ruling ("once an hour between 4am and 11pm"):
+- Workflow cron now `17 0-7,12-23 * * *` — hourly 4am–11pm PST (5am–midnight PDT), off :00.
+- `build_site.py` takes "today" in Pacific, not the UTC runner's date (evening builds would have been a
+  day ahead once builds run after 4pm Pacific).
+- Rain-email fingerprints exclude today, so a running daily total can't re-email xian every hour. Each
+  day's rain now emails once, the morning after; NCEI backfill corrections still email as before.
+Verified locally: totals match live, dry-run notify diff empty against live state.
+
+**Drain:** fix shipped and verified. Node 20 deprecation note (2026-11-12) still open, not urgent.
+
+---
+
 ## 2026-11-15 — Routine duty-cycle fire, no-op (Zephyr)
 
 Synced clean (fast-forward to `e8bfa7f`, daily brief pointer, no action). No new mail — newest file in

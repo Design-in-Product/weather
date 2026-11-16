@@ -162,7 +162,8 @@ def load_prior_season_monthlies(season_start: date) -> dict:
 
 
 def main() -> None:
-    today = date.today()
+    # Pacific, not the UTC runner's date: evening builds would otherwise be a day ahead.
+    today = datetime.now(ZoneInfo("America/Los_Angeles")).date()
     season_start = _rain_season_start(today)
 
     # Fetch each real station from NCEI (archival, may lag a few days).
@@ -338,12 +339,15 @@ def main() -> None:
         json.dumps(data_payload, indent=2), encoding="utf-8"
     )
 
-    # Fingerprints let a future Action set-diff between runs to detect new
-    # records (which may backfill past dates due to NOAA's lag).
+    # Fingerprints let the Action set-diff between runs to detect new records
+    # (which may backfill past dates due to NOAA's lag). Today is excluded: its
+    # running total changes every hourly build and would re-email each time.
+    today_iso = today.isoformat()
     state_payload = {
         "last_run": generated_at.isoformat(timespec="seconds"),
         "fingerprints": {
-            key: sorted(f"{r['date']}:{r['precipitation_in']}" for r in records)
+            key: sorted(f"{r['date']}:{r['precipitation_in']}"
+                        for r in records if r["date"] < today_iso)
             for key, records in records_by_key.items()
         },
     }
