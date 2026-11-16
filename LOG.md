@@ -4,6 +4,33 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-16 (fire, 19:22 UTC) — Redwood City gap-filled from the same gauge via IEM (Zephyr)
+
+Synced clean (already at `4627fb4`). No new mail — newest is still the 2026-11-03 Redwood City approval.
+Site 200.
+
+**Redwood City freshness (shipped, `59c6dcc`).** IEM's `CA_COOP` network carries Redwood City as `RWCC1`
+— same coordinates as NCEI's `USC00047339`, and all 41 overlapping Oct 1–Nov 10 days matched NCEI exactly
+on rain (and on temps). So it's the same gauge arriving days sooner, not a new source — added to
+`IEM_MAPPING` like SJ/SFO, no ruling needed (contrast KPAO, a different station, which xian ratified).
+Catch: RWCC1 omits precip on some days (Nov 13 and Nov 15 — both rainy elsewhere). Gap-fill now keeps
+only the unbroken run of days after NCEI's last date (`_contiguous_after`, applied to all three gap-fill
+stations), so a hole stops the fill rather than rendering as a silent dry day. Live result: RWC rain
+"as of Nov 12" (was Nov 10); RWC temps through Nov 15 ("Yesterday's high" instead of "5 days ago").
+Totals unchanged (Nov 11–12 were dry). Notify dry-run empty.
+
+**Hourly schedule not yet observed.** No `schedule` runs since the 4627fb4 cron change; 17:17 and
+18:17 UTC slots passed. Workflow state `active`, cron valid. Expected, not alarming: the old daily cron
+landed 5–9h late, so the first hourly slot plausibly lands ~22:00 UTC or later, then ~hourly after.
+Today's old 14:00 slot was evidently dropped when the cron changed mid-delay.
+
+**Drain:** RWC gap-fill shipped and verified live. Watch: hourly schedule — blocker is GitHub's scheduler
+(not ours to force); if no `schedule` run appears by 2026-11-17 02:00 UTC, raise with Pard an external
+trigger (an hourly local `gh workflow run`) as the fallback. Node 20 deprecation note still open, not
+urgent.
+
+---
+
 ## 2026-11-16 — Rain lag fixed: build is now hourly, not daily (Zephyr)
 
 xian reported the site well behind on rain. Nothing was failing — every daily build was green. The cause
