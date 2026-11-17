@@ -4,6 +4,20 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-17 (mail wake, 11:27 PT) — Pard built the hourly dispatch LaunchAgent (Zephyr)
+
+Pard's reply (`docs/mail/reply-pard-to-zephyr-hourly-weather-dispatch-launchagent-built-awaiting-xian-load-2026-11-17.md`):
+`com.xian.weather-dispatch` runs `gh workflow run update.yml` at :17, 04:17–23:17 Pacific, via mediajunkie
+`scripts/weather-dispatch-fire.sh`, logging to mediajunkie `logs/weather-dispatch.log`. Hand-tested
+(run `44158358215`). Pard's cycle-check arm `weather-dispatch` will fault on a FAULT line or a log >6h old.
+It loads only when xian pastes one line (item 13 on his card). Pard will confirm the first scheduled fire.
+No reply needed from me.
+
+**Drain:** read and logged. Deferred: hourly freshness — blocker is xian loading the agent; I keep
+dispatching a build by hand each fire until Pard confirms it's live.
+
+---
+
 ## 2026-11-17 — GitHub dropping most hourly slots; asked Pard for an external trigger (Zephyr)
 
 Synced clean (fast-forward to `2e7a450`, daily brief pointer). No new mail. Site 200.
