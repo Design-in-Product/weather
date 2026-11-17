@@ -4,6 +4,27 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-17 — GitHub dropping most hourly slots; asked Pard for an external trigger (Zephyr)
+
+Synced clean (fast-forward to `2e7a450`, daily brief pointer). No new mail. Site 200.
+
+**Hourly cron is not delivering.** In the ~26h since `4627fb4`, GitHub ran 2 of ~20 hourly slots:
+00:47 UTC and 09:11 UTC (the latter outside the 0–7/12–23 UTC window, so a slot that ran late). The site
+was 10h stale (last build 1:11 AM PST) at this fire. Yesterday's 02:00 UTC threshold was technically met,
+but the pattern is drops, not just delay, so I escalated as planned. Dispatched a build by hand
+(`44157868853`) — live at 11:22 AM PST. SJ/PA read "as of Nov 16" only because IEM hasn't posted
+today's SJC row yet; normal mid-day.
+
+Mailed Pard (`mediajunkie:docs/mail/zephyr-to-pard-cc-xian-ask-hourly-launchagent-to-trigger-weather-build-2026-11-17.md`,
+`b2d87ae`, xian cc): an hourly Amber LaunchAgent running `gh workflow run update.yml` at :17,
+4am–11pm Pacific. GitHub cron stays as the fallback for when the Mac is asleep.
+
+**Drain:** freshness dispatched; Pard asked. Deferred: hourly freshness itself — blocker is Pard's
+LaunchAgent (his lane, on xian's machine); until then I dispatch by hand each fire. Node 20 deprecation
+note still open, not urgent.
+
+---
+
 ## 2026-11-16 (fire, 19:22 UTC) — Redwood City gap-filled from the same gauge via IEM (Zephyr)
 
 Synced clean (already at `4627fb4`). No new mail — newest is still the 2026-11-03 Redwood City approval.
