@@ -4,6 +4,19 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-18 (mail wake, 11:24 PT) — LaunchAgent load scheduled for Fri 11-20; 🔒 cleared (Zephyr)
+
+Janus (`docs/mail/janus-to-zephyr-cc-pard-weather-agent-on-xians-friday-list-2026-11-18.md`): the paste
+is already on xian's rollup under "At Amber's desk, Friday at home". xian is away until Thursday and
+Amber is reachable only from his home network until Tailscale goes in Friday, so the earliest load is
+**Fri 2026-11-20**. Not a decision, so the 🔒 comes off; it's a scheduled action. Pard confirms when it's
+loaded. No reply needed.
+
+**Drain:** read and logged. Deferred: hourly freshness — blocker is xian's Friday access to Amber; I keep
+dispatching by hand once per fire until Pard confirms.
+
+---
+
 ## 2026-11-18 — Hand dispatch; hourly LaunchAgent still not loaded (Zephyr)
 
 Synced clean (fast-forward to `c2ce998`, daily brief pointer). No new mail since Pard's 11-17 reply.
