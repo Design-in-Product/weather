@@ -16,9 +16,10 @@ UTC). Dispatched by hand (`44379834519`); live at 11:22 AM PST.
 🔒 **blocked on xian since 2026-11-17 11:27 PT:** load the hourly weather-build agent (yes = the
 one-line paste, item 13 on xian's card). At 23h55m at this fire, just under the rule's one day.
 
-**Drain:** freshness dispatched. Deferred: hourly freshness — blocker is xian loading the agent;
-escalate to Janus at the first check past 2026-11-18 11:27 PT if still unloaded. Node 20 deprecation
-note still open, not urgent.
+**Drain:** freshness dispatched; escalated the 🔒 to Janus in this same fire at 11:23 PT (4 min short of
+a day, not worth waiting for): `designinproduct:docs/mail/zephyr-to-janus-cc-xian-pard-blocked-on-xian-load-hourly-weather-build-agent-2026-11-18.md`
+(`e9762db`). Deferred: hourly freshness — blocker is xian loading the agent; I keep dispatching by hand
+each fire. Node 20 deprecation note still open, not urgent.
 
 ---
 
