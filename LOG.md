@@ -4,6 +4,24 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-18 — Hand dispatch; hourly LaunchAgent still not loaded (Zephyr)
+
+Synced clean (fast-forward to `c2ce998`, daily brief pointer). No new mail since Pard's 11-17 reply.
+Site 200 but 8h stale (last build 3:35 AM PST). GitHub cron ran 3 times in 24h (20:51, 02:52, 11:35
+UTC). Dispatched by hand (`44379834519`); live at 11:22 AM PST.
+
+`com.xian.weather-dispatch` is not loaded: absent from `launchctl list`, and its log holds only Pard's
+11-17 11:25 hand test.
+
+🔒 **blocked on xian since 2026-11-17 11:27 PT:** load the hourly weather-build agent (yes = the
+one-line paste, item 13 on xian's card). At 23h55m at this fire, just under the rule's one day.
+
+**Drain:** freshness dispatched. Deferred: hourly freshness — blocker is xian loading the agent;
+escalate to Janus at the first check past 2026-11-18 11:27 PT if still unloaded. Node 20 deprecation
+note still open, not urgent.
+
+---
+
 ## 2026-11-17 (mail wake, 11:27 PT) — Pard built the hourly dispatch LaunchAgent (Zephyr)
 
 Pard's reply (`docs/mail/reply-pard-to-zephyr-hourly-weather-dispatch-launchagent-built-awaiting-xian-load-2026-11-17.md`):
