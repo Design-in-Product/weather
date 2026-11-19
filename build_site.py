@@ -19,6 +19,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from noaa_rainfall import (
+    NoaaUnavailable,
     _rain_season_start,
     fetch_nws_current_observation,
     fetch_rainfall,
@@ -185,14 +186,28 @@ def main() -> None:
     today = datetime.now(ZoneInfo("America/Los_Angeles")).date()
     season_start = _rain_season_start(today)
 
-    # Fetch each real station from NCEI (archival, may lag a few days).
+    # Fetch each real station from NCEI (archival, may lag a few days). An NCEI
+    # outage is non-fatal: IEM's gap-fill below covers the whole season alone.
+    ncei_up = True
+
+    def from_ncei(fetch, sid: str) -> list[dict]:
+        nonlocal ncei_up
+        if not ncei_up:
+            return []
+        try:
+            return fetch(season_start, today, station_id=sid)
+        except NoaaUnavailable as exc:
+            ncei_up = False
+            print(f"  NCEI unavailable, using IEM alone: {exc}", file=sys.stderr)
+            return []
+
     fetched: dict[str, list[dict]] = {}
     for src in SOURCES_CONFIG:
         sid = src["station_id"]
         if sid is None:
             continue
         print(f"Fetching {src['name']} from NCEI ({sid})...", file=sys.stderr)
-        fetched[src["key"]] = fetch_rainfall(season_start, today, station_id=sid)
+        fetched[src["key"]] = from_ncei(fetch_rainfall, sid)
 
     # Gap-fill airport stations with IEM (near-real-time, same-day freshness).
     # Only fetch the months where NCEI has gaps — typically the last 1-2 months.
@@ -250,7 +265,7 @@ def main() -> None:
         if sid is None:
             continue
         print(f"Fetching {src['name']} temperature from NCEI ({sid})...", file=sys.stderr)
-        fetched_temp[src["key"]] = fetch_temperature(season_start, today, station_id=sid)
+        fetched_temp[src["key"]] = from_ncei(fetch_temperature, sid)
 
     for key, iem_info in IEM_MAPPING.items():
         ncei_records = fetched_temp.get(key, [])

@@ -42,6 +42,11 @@ from zoneinfo import ZoneInfo
 # Configuration
 # ---------------------------------------------------------------------------
 NOAA_API_BASE = "https://www.ncei.noaa.gov/access/services/data/v1"
+
+
+class NoaaUnavailable(Exception):
+    """NCEI didn't answer (HTTP error, unreachable, or read timeout)."""
+
 DATASET = "daily-summaries"
 DATA_TYPES = "PRCP"              # Precipitation (tenths of mm from GHCND)
 DATA_TYPES_TEMP = "TMAX,TMIN"    # Daily high/low
@@ -102,12 +107,9 @@ def fetch_rainfall(start: date, end: date, station_id: str = DEFAULT_STATION_ID,
             with urlopen(req, timeout=30) as resp:
                 body = resp.read().decode()
         except HTTPError as exc:
-            print(f"Error: NOAA API returned HTTP {exc.code}", file=sys.stderr)
-            print(f"URL: {url}", file=sys.stderr)
-            sys.exit(1)
-        except URLError as exc:
-            print(f"Error: Could not reach NOAA API: {exc.reason}", file=sys.stderr)
-            sys.exit(1)
+            raise NoaaUnavailable(f"NOAA API returned HTTP {exc.code} for {url}") from exc
+        except (URLError, TimeoutError) as exc:
+            raise NoaaUnavailable(f"Could not reach NOAA API: {getattr(exc, 'reason', exc)}") from exc
 
         if debug:
             print(f"DEBUG URL: {url}", file=sys.stderr)
@@ -171,12 +173,9 @@ def fetch_temperature(start: date, end: date, station_id: str = DEFAULT_STATION_
             with urlopen(req, timeout=30) as resp:
                 body = resp.read().decode()
         except HTTPError as exc:
-            print(f"Error: NOAA API returned HTTP {exc.code}", file=sys.stderr)
-            print(f"URL: {url}", file=sys.stderr)
-            sys.exit(1)
-        except URLError as exc:
-            print(f"Error: Could not reach NOAA API: {exc.reason}", file=sys.stderr)
-            sys.exit(1)
+            raise NoaaUnavailable(f"NOAA API returned HTTP {exc.code} for {url}") from exc
+        except (URLError, TimeoutError) as exc:
+            raise NoaaUnavailable(f"Could not reach NOAA API: {getattr(exc, 'reason', exc)}") from exc
 
         if debug:
             print(f"DEBUG URL: {url}", file=sys.stderr)
@@ -1517,7 +1516,11 @@ def main() -> None:
     for sid, sname in stations_to_try:
         print(f"Fetching rainfall data for {sname} ({sid})...", file=sys.stderr)
         print(f"Period: {start} to {end}", file=sys.stderr)
-        records = fetch_rainfall(start, end, station_id=sid, debug=args.debug)
+        try:
+            records = fetch_rainfall(start, end, station_id=sid, debug=args.debug)
+        except NoaaUnavailable as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
         if records:
             used_id, used_name = sid, sname
             break
