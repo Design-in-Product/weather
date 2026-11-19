@@ -22,11 +22,10 @@ jobs:
         shell: python3 {0}
         run: |
           import os, smtplib
+          # Public repo: Actions logs are public, so print nothing about the secrets
+          # beyond whether the password has an app password's shape.
           u, p = os.environ.get("SMTP_USER", ""), os.environ.get("SMTP_PASS", "")
-          dom = lambda a: (a.split("@")[-1] if "@" in a else "(no @)") if a else "(unset)"
-          print("user domain:", dom(u), "| from domain:", dom(os.environ.get("SMTP_FROM", "")),
-                "| to domain:", dom(os.environ.get("REPORT_TO", "")),
-                "| pass length:", len(p), "| pass has spaces:", " " in p)
+          print("app-password shape (16 letters):", len(p.replace(" ", "")) == 16 and p.replace(" ", "").isalpha())
           stage = "connect"
           try:
               s = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)

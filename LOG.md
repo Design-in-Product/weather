@@ -4,6 +4,49 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-19 — NCEI outage killed a build; site now falls back to IEM (Zephyr)
+
+Synced clean (fast-forward to `b8f949c`, daily brief pointer). No new mail since Janus's 11-18 reply.
+Site 200 but 17h stale (last build 6:32 PM PST 11-18). LaunchAgent still not loaded (expected: xian's
+Friday 11-20 paste).
+
+**First build failure in this stretch.** The 11:33 UTC scheduled run died on a 30s read timeout from
+NCEI on its very first fetch (Redwood City). `fetch_rainfall`/`fetch_temperature` turned NCEI errors
+into `sys.exit(1)` and didn't catch read timeouts at all, so one NCEI hiccup failed the build and froze
+the site, even though IEM alone covers the season. My own probe of NCEI timed out at 40s; the next try
+answered, so NCEI is flaky, not fully down.
+
+**Fix (`6f1a61f`).** NCEI fetchers raise `NoaaUnavailable` (HTTP error, unreachable, or timeout); the
+CLI still exits cleanly. `build_site.py` catches it once, skips NCEI for the rest of the run (no 6×30s
+waits), and IEM gap-fill covers everything. Forced-outage test: identical totals **and identical
+fingerprints** for all four sources vs. the NCEI build, so flipping between sources can't send a false
+rain email.
+
+**Deployed** (`44598046755`, NCEI slow but up). Live at 11:25 AM PST. It now shows the 11-18 storm the
+stale site was missing: San Jose 2.04", SFO 2.79" that day. Season totals: Palo Alto 3.52", San Jose
+3.47", SFO 6.62", Redwood City 0.37" (as of Nov 12; RWCC1 still hasn't reported precip for Nov 13).
+Nov 18 was correctly detected as fresh rain, **but the email failed**, which led to the next finding.
+
+**Rain-alert email has never sent this season.** Every rainy run from 10-22 to 11-19 (13 of them)
+logged `WARNING: Failed to send email: Connection unexpectedly closed` and deployed anyway, so nothing
+surfaced it. Added `.github/workflows/smtp-check.yml` (manual-only; walks connect → STARTTLS → login,
+never sends). Result: Gmail drops the connection at **login**. The `SMTP_PASS` secret doesn't have the
+shape of a Google app password, which Gmail SMTP requires. Locally the connect/TLS stages pass and this
+Mac's keychain holds no SMTP creds, so it can't be fixed from here. The first check run printed secret
+metadata to a public Actions log; I deleted that run and trimmed the check to print only a yes/no
+app-password-shape flag.
+
+Mailed Janus for xian's rollup (`designinproduct:docs/mail/zephyr-to-janus-cc-xian-rain-alert-emails-never-sent-needs-app-password-2026-11-19.md`,
+`f47784b`): create a Google app password for the SMTP account and `gh secret set SMTP_PASS`. About 5
+minutes, works remotely.
+
+**Drain:** NCEI outage fix shipped and deployed; email failure diagnosed and routed. Deferred:
+(1) hourly freshness — blocker is xian loading the agent Fri 11-20; I keep dispatching by hand each
+fire. (2) rain-alert email — blocker is xian setting a new `SMTP_PASS`; I run `smtp-check` once he
+does. Node 20 deprecation note still open, not urgent.
+
+---
+
 ## 2026-11-18 (mail wake, 11:24 PT) — LaunchAgent load scheduled for Fri 11-20; 🔒 cleared (Zephyr)
 
 Janus (`docs/mail/janus-to-zephyr-cc-pard-weather-agent-on-xians-friday-list-2026-11-18.md`): the paste
