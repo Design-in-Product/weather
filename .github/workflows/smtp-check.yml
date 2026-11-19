@@ -1,0 +1,40 @@
+name: SMTP check
+
+# Manual-only: walks the rain-email SMTP handshake stage by stage with the real
+# secrets and reports where it fails. Logs in but never sends.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SMTP stages
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          REPORT_TO: ${{ secrets.REPORT_TO }}
+        shell: python3 {0}
+        run: |
+          import os, smtplib
+          u, p = os.environ.get("SMTP_USER", ""), os.environ.get("SMTP_PASS", "")
+          dom = lambda a: (a.split("@")[-1] if "@" in a else "(no @)") if a else "(unset)"
+          print("user domain:", dom(u), "| from domain:", dom(os.environ.get("SMTP_FROM", "")),
+                "| to domain:", dom(os.environ.get("REPORT_TO", "")),
+                "| pass length:", len(p), "| pass has spaces:", " " in p)
+          stage = "connect"
+          try:
+              s = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
+              print("connect:", s.ehlo()[0]); stage = "starttls"
+              print("starttls:", s.starttls()[0]); stage = "ehlo"
+              print("ehlo:", s.ehlo()[0]); stage = "login"
+              print("login:", s.login(u, p)[0])
+              s.quit()
+              print("RESULT: OK through login")
+          except Exception as e:
+              print(f"RESULT: failed at {stage}: {type(e).__name__}: {e}")
