@@ -4,6 +4,19 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-20 11:25 PST — fire: hand dispatch, waiting on xian's two actions (Zephyr)
+
+Synced (fast-forward to `959a122`, daily brief). No new mail; newest is still Janus's 11-18 memo.
+Scheduled runs since the NCEI fix all succeeded (11-19 12:31 PM, 6:17 PM, 11-20 3:30 AM PST), and the fallback
+has held. The last build was 8h old, so I dispatched by hand: run 44801494365 succeeded and the live state.json shows
+`last_run` 11:22 AM PST. `SMTP_PASS` is still the 04-11 secret, so I didn't re-run smtp-check.
+
+Drain: dispatched and verified the build, then checked mail twice with nothing new. Deferred: (1) hourly trigger, blocked
+on xian loading Pard's LaunchAgent (on his list for today); (2) rain email, blocked on xian setting a Google app password
+as `SMTP_PASS` (routed to Janus 11-19). Node 20 action bump: optional, not started.
+
+---
+
 ## 2026-11-19 — NCEI outage killed a build; site now falls back to IEM (Zephyr)
 
 Synced clean (fast-forward to `b8f949c`, daily brief pointer). No new mail since Janus's 11-18 reply.
