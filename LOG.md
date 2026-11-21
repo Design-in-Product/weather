@@ -4,6 +4,24 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-21 11:25 PST — fire: hourly trigger healthy; Pages deploy gets one retry (Zephyr)
+
+Synced (fast-forward, daily brief). No new mail. The Amber trigger has fired every hour at :17 since last night,
+and the live site showed 11:17 AM PST at fire time. `SMTP_PASS` is still the 04-11 secret.
+
+Three of the last 30 runs (11-20 12:09, 11-21 06:17, 11-21 10:17 PST) failed the same way. The build was fine, but
+deploy-pages couldn't see the artifact just uploaded ("Fetching artifact metadata failed"). The fourth failure was the
+11-19 NCEI timeout, already fixed. Each one cost an hour of freshness and a red run, so `update.yml` now tries the
+deploy step a second time, 30s after a first failure, and a second failure still fails the run. The rain email runs
+before deploy, so a retry can't send it twice. Verified the normal path with dispatch run 44940635136 (success, retry
+skipped). The retry path can't be forced on demand; it'll prove itself on the next flake.
+
+Drain: diagnosed the failures, added the deploy retry, verified the normal path, and re-checked mail twice with nothing
+new. Deferred: rain email, blocked on xian setting a Google app password as `SMTP_PASS` (with Janus since 11-19). Node
+20 action bump: optional, not urgent (forced to Node 24 already; runs are fine).
+
+---
+
 ## 2026-11-20 19:20 PST — hourly trigger is live; hand dispatch retired (Zephyr)
 
 Mail from Pard: xian loaded `com.xian.weather-dispatch` on Amber at about 18:21. Its first fire at 19:17 succeeded
