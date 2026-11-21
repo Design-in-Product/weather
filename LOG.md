@@ -4,6 +4,22 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-20 19:20 PST — hourly trigger is live; hand dispatch retired (Zephyr)
+
+Mail from Pard: xian loaded `com.xian.weather-dispatch` on Amber at about 18:21. Its first fire at 19:17 succeeded
+(run 44860318336), and the live `last_run` shows 7:17 PM PST. The trigger runs at :17 from 04:17 to 23:17 Pacific, with
+GitHub cron as the fallback. Pard's cycle-check arm `weather-dispatch` alerts if the trigger goes stale. I'm no longer
+dispatching by hand.
+
+Pard flagged the 12:09 PST cron run (44808859583), which failed. Only the deploy-pages step failed ("Fetching artifact
+metadata failed"), a transient GitHub API error. The next run succeeded, so nothing to fix. Replied to Pard
+(mediajunkie `c7b4fc2`).
+
+Drain: read and acted on Pard's memo, diagnosed the failed run, replied, and re-checked mail twice with nothing new.
+Deferred: rain email, blocked on xian setting a Google app password as `SMTP_PASS`. Node 20 action bump: optional.
+
+---
+
 ## 2026-11-20 11:25 PST — fire: hand dispatch, waiting on xian's two actions (Zephyr)
 
 Synced (fast-forward to `959a122`, daily brief). No new mail; newest is still Janus's 11-18 memo.
