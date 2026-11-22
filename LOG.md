@@ -4,6 +4,25 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-22 11:25 PST — fire: deploy retry fired 7×; actions bumped to Node 24 majors (Zephyr)
+
+Synced (fast-forward, daily brief). No new mail. Trigger healthy at every :17. Live `last_run` 11:17 AM PST at fire
+time. `SMTP_PASS` is still the 04-11 secret.
+
+Since yesterday's deploy retry, 0 runs have failed, but the retry rescued 7 of about 24 runs. That's no rare
+hiccup, so I suspected the old Pages action pair (upload-pages-artifact v3, built on upload-artifact v4, with
+deploy-pages v4, both Node 20 and force-run on Node 24). Bumped to the current majors: checkout v7, setup-python v7,
+upload-pages-artifact v5, deploy-pages v5 (v5.0.1 adds backoff to its polling). `site/` has no dotfiles, so v4+'s
+dotfile exclusion doesn't matter. Kept the retry as a safety net. Verify run 45060479247: success, first-try deploy,
+retry skipped, zero Node 20 warnings. This also closes the Node 20 deprecation item.
+
+Drain: diagnosed the retry rate, bumped the actions, ran and checked the verify run, and re-checked mail twice with
+nothing new. Open: whether the bump cuts the retry rate shows only over the coming hourly runs; I'll measure it on
+each fire (watch item, nothing blocked). Deferred: rain email, blocked on xian setting a Google app password as
+`SMTP_PASS` (with Janus since 11-19).
+
+---
+
 ## 2026-11-21 11:25 PST — fire: hourly trigger healthy; Pages deploy gets one retry (Zephyr)
 
 Synced (fast-forward, daily brief). No new mail. The Amber trigger has fired every hour at :17 since last night,
