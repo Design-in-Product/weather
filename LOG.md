@@ -4,6 +4,24 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-23 11:35 PST — fire: real cause of the deploy flake found; wait added before deploy (Zephyr)
+
+Synced (fast-forward, daily brief). No new mail. Trigger healthy (every :17), live `last_run` 11:17 AM PST at fire
+time, 24/24 runs succeeded since the action bump. `SMTP_PASS` is still the 04-11 secret.
+
+The action bump didn't help: the retry still fired on 8 of 24 runs. Timeline: no overlapping runs, so not a concurrency
+race. Run 45214741163's log shows the cause: artifact finalized 16:17:38.03, deploy-pages queried 16:17:38.43 and got
+"not found", and the retry at 16:18:09 found it. GitHub's artifact listing lags the upload by a few seconds. Added a
+fixed `sleep 15` before the first deploy and kept the 30s retry as backstop. Three back-to-back test runs (45248503925,
+45248787270, 45249065327): all deployed first try. That's suggestive, not proof at a 1-in-3 base rate. The hourly runs
+will tell.
+
+Drain: found the cause, added the wait, ran and checked 3 test runs, and re-checked mail twice with nothing new. Watch
+item: retry rate over the hourly runs (nothing blocked). Deferred: rain email, blocked on xian setting a Google app
+password as `SMTP_PASS` (with Janus since 11-19).
+
+---
+
 ## 2026-11-22 11:25 PST — fire: deploy retry fired 7×; actions bumped to Node 24 majors (Zephyr)
 
 Synced (fast-forward, daily brief). No new mail. Trigger healthy at every :17. Live `last_run` 11:17 AM PST at fire
