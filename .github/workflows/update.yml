@@ -69,9 +69,13 @@ jobs:
         with:
           path: site
 
-      # deploy-pages sometimes can't see the artifact just uploaded ("Fetching
-      # artifact metadata failed"): 3 runs in 11-20/21, each fine on the next
-      # run. One delayed retry; a second failure still fails the run.
+      # GitHub's artifact listing lags the upload: deploy-pages queried it 0.4s
+      # after "finalized" and got "Fetching artifact metadata failed" on ~1 run
+      # in 3 (11-21..23); every retry 30s later found it. So wait first, and
+      # keep one delayed retry; a second failure still fails the run.
+      - name: Let the artifact become visible
+        run: sleep 15
+
       - name: Deploy to GitHub Pages
         id: deployment
         continue-on-error: true
