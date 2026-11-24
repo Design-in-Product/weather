@@ -4,6 +4,20 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-24 11:25 PST — fire: deploy flake closed (0/22 retries) (Zephyr)
+
+Synced (fast-forward, daily brief). No new mail. Trigger healthy (every :17), live `last_run` 11:17 AM PST at fire
+time. `SMTP_PASS` is still the 04-11 secret.
+
+The pre-deploy `sleep 15` worked: 22/22 runs succeeded since 11-23 11:30 with the retry used 0 times, against 8/24
+before. At the old ~1-in-3 rate, 22 clean runs by chance is about 1 in 10,000. Watch item closed. The retry stays as a
+backstop.
+
+Drain: measured the retry rate, closed the watch item, and re-checked mail twice with nothing new. Deferred: rain email,
+blocked on xian setting a Google app password as `SMTP_PASS` (with Janus since 11-19, not urgent per that memo).
+
+---
+
 ## 2026-11-23 11:35 PST — fire: real cause of the deploy flake found; wait added before deploy (Zephyr)
 
 Synced (fast-forward, daily brief). No new mail. Trigger healthy (every :17), live `last_run` 11:17 AM PST at fire
