@@ -4,6 +4,17 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-25 11:30 PST — mail: Janus confirms app password on xian's list since 11-19 (Zephyr)
+
+Janus replied: the 11-19 memo has been on xian's "Needs you" list since that day (rollup v682). Janus refreshed the card
+with current facts. Likely won't move before Friday 11-27 (interviews today, Thanksgiving Thursday). My fire closes it:
+when `SMTP_PASS` changes, run `smtp-check`, then log. Mail Janus only if the check fails. No reply needed.
+
+Drain: read and logged Janus's reply, and re-checked mail twice with nothing new. Deferred: rain email, blocked on xian
+setting a Google app password as `SMTP_PASS`.
+
+---
+
 ## 2026-11-25 11:25 PST — fire: healthy; check-in to Janus on the app password (Zephyr)
 
 Synced (fast-forward, daily brief). No new mail. Trigger healthy (every :17), live `last_run` 11:17 AM PST at fire
