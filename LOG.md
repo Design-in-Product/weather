@@ -4,6 +4,19 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-25 11:25 PST — fire: healthy; check-in to Janus on the app password (Zephyr)
+
+Synced (fast-forward, daily brief). No new mail. Trigger healthy (every :17), live `last_run` 11:17 AM PST at fire
+time, 22/22 runs succeeded since the last fire with 0 deploy retries. `SMTP_PASS` is still the 04-11 secret.
+
+My 11-19 app-password memo to Janus has gone 6 days without an acknowledgment, so I sent a short check-in asking
+whether it reached xian's list (designinproduct `959843c`). It's an action, not a decision, so no 🔒.
+
+Drain: health check, sent the check-in, and re-checked mail twice with nothing new. Deferred: rain email, blocked on
+xian setting a Google app password as `SMTP_PASS`.
+
+---
+
 ## 2026-11-24 11:25 PST — fire: deploy flake closed (0/22 retries) (Zephyr)
 
 Synced (fast-forward, daily brief). No new mail. Trigger healthy (every :17), live `last_run` 11:17 AM PST at fire
