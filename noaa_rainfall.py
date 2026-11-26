@@ -608,6 +608,11 @@ h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
   min-height: 2px;
 }
 .daily-strip .day.rain { background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); }
+/* PA estimate days that fell back to San Jose alone (xian's pick B, step 2). */
+.daily-strip .day.sj-only { opacity: 0.55; }
+.daily-strip .day.rain.sj-only {
+  background: repeating-linear-gradient(135deg, #60a5fa 0 3px, #bfdbfe 3px 6px);
+}
 .daily-strip-labels {
   display: flex; justify-content: space-between;
   font-size: 10px; color: #6a7785; margin-top: 6px;
@@ -986,6 +991,7 @@ def _render_source_section(source: dict, season_start: date, today: date,
     # Daily strip — last 14 days
     recent_records = source["records"][-14:]
     max_day = max((r["precipitation_in"] for r in recent_records), default=0)
+    sj_only_set = set(sj_only)
     strip_html = ""
     for r in recent_records:
         v = r["precipitation_in"]
@@ -995,7 +1001,11 @@ def _render_source_section(source: dict, season_start: date, today: date,
         else:
             h_pct = 8
             cls = ""
-        strip_html += f'<div class="day{cls}" style="height: {h_pct:.0f}%"></div>'
+        title = ""
+        if r["date"] in sj_only_set:
+            cls += " sj-only"
+            title = ' title="San Jose only — Redwood City pending"'
+        strip_html += f'<div class="day{cls}"{title} style="height: {h_pct:.0f}%"></div>'
     if recent_records:
         first = datetime.strptime(recent_records[0]["date"], "%Y-%m-%d").strftime("%b %-d")
         last = datetime.strptime(recent_records[-1]["date"], "%Y-%m-%d").strftime("%b %-d")
