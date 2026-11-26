@@ -4,6 +4,15 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-26 10:58 PST — ship: PA estimate label, step 1 of xian's pick B (Zephyr)
+
+xian picked B, built in steps, each tested live (Janus 11-26 10:51). Step 1 shipped in e1608aa: `sj_only_dates()` in
+build_site.py, and the label on the PA card in noaa_rainfall.py. Live check after deploy run 45879907770: the PA card
+reads "San Jose only on 12 days since Nov 13 — Redwood City data pending; will revise". No label on other cards.
+data.json shows 12 SJ-only days, Nov 13–25. Mailed Janus. Next: step 2, mark SJ-only days in the chart.
+
+---
+
 ## 2026-11-26 10:45 PST — mail: does Redwood City lag skew the Palo Alto estimate? Yes; options sent (Zephyr)
 
 Janus relayed xian's question. Confirmed from `compute_palo_alto_estimate` (build_site.py:122–143) and live data.json
