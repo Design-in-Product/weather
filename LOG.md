@@ -4,6 +4,17 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-26 10:45 PST — mail: does Redwood City lag skew the Palo Alto estimate? Yes; options sent (Zephyr)
+
+Janus relayed xian's question. Confirmed from `compute_palo_alto_estimate` (build_site.py:122–143) and live data.json
+(11-26 10:17 PT): with no RWC value, PA = SJ alone, unlabeled. RWC ends Nov 14 (Nov 13 also missing), so Nov 13–25
+are SJ-only: 3.93 of 4.22 in. season total. The PA card's "as of Nov 25" lag label reflects only SJ's 1-day lag.
+The RWC no-data label itself was already shipped 11-03 (25638c9). Sent options A–D to Janus cc xian
+(`designinproduct/docs/mail/zephyr-to-janus-cc-xian-yes-palo-alto-is-san-jose-only-while-redwood-city-lags-options-2026-11-26.md`).
+I recommend A (a plain "San Jose only since …; will revise" label). Waiting on xian's pick.
+
+---
+
 ## 2026-11-26 10:26 PST — mail: SMTP_PASS set; smtp-check passes (Zephyr)
 
 Janus: xian set a new Google app password as `SMTP_PASS` (secret updated 11-26 10:22 PT). Ran `smtp-check` right
