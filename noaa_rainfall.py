@@ -935,6 +935,22 @@ def _render_source_section(source: dict, season_start: date, today: date,
             as_of_str = latest_date.strftime("%b %-d")
             staleness_html = f' <span class="live-fail">(as of {as_of_str} — archival lag)</span>'
 
+    # Estimate fallback: on days Redwood City hasn't reported, the PA estimate
+    # is San Jose alone. Say so, and that it will revise (xian's pick B, step 1,
+    # 2026-11-26). Only the estimate source carries `sj_only_dates`.
+    fallback_html = ""
+    sj_only = source.get("sj_only_dates") or []
+    if sj_only:
+        first = datetime.strptime(sj_only[0], "%Y-%m-%d").date()
+        span = (datetime.strptime(sj_only[-1], "%Y-%m-%d").date() - first).days + 1
+        since = first.strftime("%b %-d")
+        which = (f"San Jose only since {since}" if len(sj_only) == span
+                 else f"San Jose only on {len(sj_only)} days since {since}")
+        fallback_html = (
+            f'<div class="meta"><span class="live-fail">{which} — '
+            'Redwood City data pending; will revise</span></div>'
+        )
+
     # Recent rain card
     last_rain = summary["last_rain"]
     if last_rain:
@@ -996,6 +1012,7 @@ def _render_source_section(source: dict, season_start: date, today: date,
         f'<div><span class="number">{total:.2f}</span><span class="unit"> in</span></div>'
         '<div class="label">Season total</div>'
         f'<div class="meta">{rainy} {rainy_lbl} with rain · since {season_start.strftime("%b %-d, %Y")}{staleness_html}</div>'
+        f'{fallback_html}'
         f'{note_html}'
         '</div>'
         f'<div class="card">{recent_html}</div>'

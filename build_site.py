@@ -143,6 +143,17 @@ def compute_palo_alto_estimate(sj_records: list[dict],
     return estimate
 
 
+def sj_only_dates(sj_records: list[dict], rwc_records: list[dict]) -> list[str]:
+    """Dates where the PA estimate fell back to San Jose alone (no RWC value).
+
+    Usually Redwood City's archival lag; the card labels these days so the
+    estimate doesn't silently read as the weighted formula (xian's pick B,
+    step 1, 2026-11-26). Clears itself once RWC's archive catches up.
+    """
+    rwc_dates = {r["date"] for r in rwc_records}
+    return sorted(r["date"] for r in sj_records if r["date"] not in rwc_dates)
+
+
 def load_prior_season_monthlies(season_start: date) -> dict:
     """Load cached prior-season monthly rain totals + avg highs, if any.
 
@@ -255,6 +266,10 @@ def main() -> None:
             "records": records_by_key.get(src["key"], []),
             "prior_monthly": prior["rain"].get(src["key"], {}),
         })
+        if src["key"] == "palo_alto_estimate":
+            sources[-1]["sj_only_dates"] = sj_only_dates(
+                fetched.get("san_jose", []), fetched.get("redwood_city", []),
+            )
 
     # Temperature: San Jose, Redwood City, SFO use the same NCEI+IEM
     # gap-fill pattern as rain. Palo Alto is handled separately below —
