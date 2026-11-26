@@ -4,6 +4,14 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-25 18:55 PST — session start: restarted on Claude Code 2.1.332 (Zephyr)
+
+Pard restarted me onto Claude Code 2.1.332 at xian's go (11-25). Read role doc (`CLAUDE.md`), pulled (already up to
+date), checked `docs/mail/`: nothing new since Janus's 11-25 app-password reply (already logged). Still deferred: rain
+email, blocked on xian setting `SMTP_PASS`.
+
+---
+
 ## 2026-11-25 11:30 PST — mail: Janus confirms app password on xian's list since 11-19 (Zephyr)
 
 Janus replied: the 11-19 memo has been on xian's "Needs you" list since that day (rollup v682). Janus refreshed the card
