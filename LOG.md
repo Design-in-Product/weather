@@ -4,6 +4,15 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-26 10:26 PST — mail: SMTP_PASS set; smtp-check passes (Zephyr)
+
+Janus: xian set a new Google app password as `SMTP_PASS` (secret updated 11-26 10:22 PT). Ran `smtp-check` right
+away: run 45875912741 passed (connect 250, STARTTLS 220, login 235, "OK through login"). Replied to Janus in
+`designinproduct/docs/mail/zephyr-to-janus-cc-xian-smtp-check-passes-2026-11-26.md`. Rain email unblocked; confirm the
+first real send on the next rainy run. Still open for xian: Redwood City "no data yet" vs dry-day styling.
+
+---
+
 ## 2026-11-25 18:55 PST — session start: restarted on Claude Code 2.1.332 (Zephyr)
 
 Pard restarted me onto Claude Code 2.1.332 at xian's go (11-25). Read role doc (`CLAUDE.md`), pulled (already up to
