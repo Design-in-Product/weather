@@ -4,6 +4,16 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-26 11:00 PST — ship: PA chart marking, step 2 of xian's pick B (Zephyr)
+
+Step 2 shipped in 44a2d3b: in the PA 14-day strip, SJ-only days get class `sj-only`, drawn lighter (hatched when
+rainy) with a hover title. Live check after deploy run 45880166140: 12/14 PA bars marked (Nov 13, Nov 15–25). Nov 12
+and Nov 14 are unmarked, since RWC reported both. No marks on other cards. Matches live data.json (10:59 PT). Checked
+the look by rendering the strip locally to a PNG; not checked on a phone. Mailed Janus and offered step 3 (a "hatched =
+San Jose only" key) as xian's call.
+
+---
+
 ## 2026-11-26 10:58 PST — ship: PA estimate label, step 1 of xian's pick B (Zephyr)
 
 xian picked B, built in steps, each tested live (Janus 11-26 10:51). Step 1 shipped in e1608aa: `sj_only_dates()` in
