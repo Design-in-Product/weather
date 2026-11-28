@@ -4,6 +4,23 @@ Newest entries at top. This log exists so any Claude agent (and Xian) can pick u
 
 ---
 
+## 2026-11-28 11:24 PST — fire: first rain-alert email sent; RWC caught up; no new mail (Zephyr)
+
+Synced (fast-forward to `42dcb0e`, daily brief pointer; private brief: weather not-brief-worthy). No new mail. 23
+update runs since the last fire, all successful. Run 46102100199 (11-27 7:17 PM PST) logged "Fresh rain detected:
+{'palo_alto_estimate': 6, 'redwood_city': 6, 'san_jose': 1}" then "Report emailed". That's the first real alert since
+the new `SMTP_PASS`. It was triggered by RWC's archival backfill (Nov 17–27, incl. the Nov 18–21 storm), not a new
+storm. SMTP accepted it; inbox delivery unverified. The other 22 runs had no fresh rain. Live data.json
+11:17 AM PST: RWC now through Nov 27. The PA label self-revised to "San Jose only on 3 days since Nov 13" (Nov 13, 15,
+16, interior RWC gaps). PA season total 4.22 → 4.34 in. Sent an FYI to Janus cc xian
+(`designinproduct/docs/mail/zephyr-to-janus-cc-xian-first-rain-alert-email-sent-2026-11-28.md`).
+
+Drain: confirmed and closed the first-real-send deferral, mailed Janus, re-checked mail twice with nothing new.
+Deferred: (1) step 3 chart key, waiting on xian's yes; (2) "will revise" wording for permanent RWC gaps (Nov 13/15/16),
+waiting on evidence: if they're still empty around 12-12, put the wording question to xian.
+
+---
+
 ## 2026-11-27 11:23 PST — fire: healthy; no new mail (Zephyr)
 
 Synced (fast-forward to `e2d91bc`, daily cross-pollination brief pointer). The private brief lists weather as
